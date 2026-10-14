@@ -12,7 +12,6 @@ const itiDuration = 500;
 const fixationDuration = 500;
 const linesDuration = 2500;
 const imageryDuration = 2000;
-const gap3Duration = 250;
 const incorrectDuration = 800;
 const correctDuration = 900;
 const feedback2Duration = 600;
@@ -39,10 +38,10 @@ function svgDataUrl(svgMarkup) {
 }
 
 // All stimuli share a 330 px canvas to keep their centers aligned.
-const gridCellSize = 66;
+const gridCellSize = 80;
 const taskFrameSize = gridCellSize * 5;
 const taskFrameBorderWidth = 4;
-const taskFrameBorderColor = '#10283f';
+const taskFrameBorderColor = 'black';
 document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
 document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
 document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
@@ -58,7 +57,7 @@ const lineWidth = 3;
 
 function gridStimulus(lineLengths = null) {
     const size = taskFrameSize;
-    let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#bfbfbf"/>`;
+    let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="lightgray"/>`;
     for (const column of [1, 3]) {
         markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="black"/>`;
     }
@@ -75,6 +74,3 @@ function gridStimulus(lineLengths = null) {
     }
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
-
-const fixationText = '<div class="task-panel fixation-text">+</div>';
-const HowVivid = '<div class="task-panel">How vivid?</div>';

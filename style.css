@@ -61,6 +61,11 @@ body, html {
     font-size: 32px;
 }
 
+.rating-panel {
+    flex-direction: column;
+    gap: 24px;
+}
+
 /* jsPsych adds trial classes to the content element itself. Center the box
    in the viewport and reserve space below it for prompts and controls. */
 .jspsych-content.trial-frame {

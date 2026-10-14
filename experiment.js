@@ -65,7 +65,7 @@ timeline.push(preloadImages);
 const fixation = {
     type: jsPsychHtmlKeyboardResponse,
     css_classes: ['trial-frame'],
-    stimulus: fixationText,
+    stimulus: '<div class="task-panel fixation-text">+</div>',
     choices: "NO_KEYS",
     trial_duration: fixationDuration,
     data: {stage: 'fixation'},
@@ -123,11 +123,16 @@ const rating_stage = {
     type: jsPsychHtmlButtonResponse,
     css_classes: ['trial-frame'],
     choices: ["1", "2", "3", "4", "5"],
-    stimulus: HowVivid,
+    stimulus: '<div class="task-panel rating-panel"><div>How vivid?</div></div>',
     prompt: promptVivdness,
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'vividness'}),
     on_start: function() {
         document.documentElement.style.cursor = 'default';
+    },
+    on_load: function() {
+        const panel = document.querySelector('.rating-panel');
+        const buttons = document.getElementById('jspsych-html-button-response-btngroup');
+        panel.appendChild(buttons);
     },
     on_finish: function(data) {
         data.rating = Number(data.response) + 1;
@@ -180,9 +185,9 @@ let frame_duration_exclusion = {
         });
     }
 };
-if (jump_to_questionnaire != "on") {
-    timeline.push(frame_duration_exclusion);
-}
+// if (jump_to_questionnaire != "on") {
+//     timeline.push(frame_duration_exclusion);
+// }
 
 
 // Quick demo version: no practice instructions or extra blocks.
