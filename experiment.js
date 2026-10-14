@@ -1,6 +1,5 @@
 /* initialize jsPsych */
 let jsPsych = initJsPsych({
-    display_element: 'progressContainer',
     display_element: 'jspsych-target',
     on_finish: function() {
         window.location.href = debriefURL;
@@ -58,129 +57,75 @@ const maxBlockNum = 1;
 // /* preload images */
 let preloadImages = {
     type: jsPsychPreload,
-    images: [], 
+    images: [fixationImage, gridStimulus(), ...Array.from({length: 4}, (_, i) => generate_trial('off', 1, i + 1, 1).stimulus)],
 };
 timeline.push(preloadImages);
 
-// trial structure
-let fixation = {
+// A probe is shown without accepting responses, then replaced by the judgment screen.
+const fixation = {
     type: jsPsychImageKeyboardResponse,
     stimulus: fixationImage,
     choices: "NO_KEYS",
-    prompt: "",
     trial_duration: fixationDuration,
+    data: {stage: 'fixation'},
 };
-let image_stage = {
+const imagery_stage = {
     type: jsPsychImageKeyboardResponse,
-    stimulus: jsPsych.timelineVariable('prime_image'),
+    stimulus: gridStimulus(),
     choices: "NO_KEYS",
-    data: jsPsych.timelineVariable("data"),
-    prompt: "",
-    trial_duration: jsPsych.timelineVariable('image_duration'),
+    prompt: '<p>Imagine<br>Middle / top / bottom</p>',
+    trial_duration: imageryDuration,
+    data: {stage: 'imagery'},
 };
-let gap2 = {
-    type: jsPsychImageKeyboardResponse,
-    choices: "NO_KEYS",
-    prompt: "",
-    stimulus: jsPsych.timelineVariable('anchor_image'),
-    trial_duration: jsPsych.timelineVariable('imagery_duration'),
-};
-let test_stage = {
+const presentation_stage = {
     type: jsPsychImageKeyboardResponse,
     stimulus: jsPsych.timelineVariable('stimulus'),
-    choices: [keySame, keyDifferent],
-    prompt: "<div style='font-size:22px; margin-top: 10px;'>Same / Different</div>",
-    trial_duration: jsPsych.timelineVariable('trial_duration'),
-    data: jsPsych.timelineVariable("data"),
-    on_finish: function(data){
-        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
-        if (data.isPractice == "practice_1" || data.isPractice == "practice_2" || data.isPractice == "practice_3"){
-            data.trial_num = 0;
-        } else {
-            data.trial_num = real_trial_num ++;     
-        }
-        $("#progressBar").css(
-            "width",
-            ((real_trial_num - 1) / (block1.length + block2.length + block3.length + block4.length)) * 100 + "px"
-        );
-        if (save_data_locally != "on"){
-            saveData();
-        }
-    }
+    choices: "NO_KEYS",
+    trial_duration: imageDuration,
+    data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
 };
-let feedback = {
+const test_stage = {
     type: jsPsychHtmlKeyboardResponse,
-    choices: function() {
-        const choice_info = jsPsych.data.getLastTrialData().values()[0];
-        if ((choice_info.response != null && choice_info.rt < tooFastResponseTime) || (choice_info.response == null)){
-            return [" "];
-        } else {
-            return "NO_KEYS";
-        }
+    stimulus: '<div class="task-panel">Same or different<br>length?</div>',
+    choices: [keySame, keyDifferent],
+    prompt: promptKey,
+    trial_duration: maxResponseTime,
+    response_ends_trial: true,
+    data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
+    on_finish: function(data) {
+        data.timed_out = data.response === null;
+        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+        data.trial_num = real_trial_num++;
+        if (save_data_locally !== "on") saveData();
     },
-    trial_duration: function (){
-        const choice_info = jsPsych.data.getLastTrialData().values()[0];
-        if (choice_info.correct == true && choice_info.rt >= tooFastResponseTime){
-            return correctDuration;
-        } else if (choice_info.correct == false && choice_info.response != null && choice_info.rt >= tooFastResponseTime){
-            return incorrectDuration;
-        }
-    },
-    stimulus: function() {
-        const choice_info = jsPsych.data.getLastTrialData().values()[0];
-        if (choice_info.correct == true && choice_info.rt >= tooFastResponseTime) { // correct
-            let feedbackRT = choice_info.rt;
-            let correctFeedback = '<div style="color: green; font-size: 16pt; border: 8px solid green; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">Correct <br> Reaction Time: ' + feedbackRT + 'ms.' + '</div>';
-            return correctFeedback ;
-        } else if (choice_info.response != null && choice_info.rt < tooFastResponseTime) { // too fast
-            return tooFastFeedback;
-        } else if (choice_info.response == null) { // too slow
-            return tooSlowFeedback;
-        } else { // incorrect
-            return incorrectFeedback;
-        }
-    },
-    prompt: jsPsych.timelineVariable('prompt_feedback'),
 };
-let rating_stage = {
+const too_slow_warning = {
+    timeline: [{
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div class="task-panel">Too slow!<br>Press the space bar to continue.</div>',
+        choices: [' '],
+        response_ends_trial: true,
+        data: {stage: 'too_slow_warning'},
+    }],
+    conditional_function: function() {
+        return jsPsych.data.getLastTrialData().values()[0].timed_out === true;
+    },
+};
+const rating_stage = {
     type: jsPsychHtmlButtonResponse,
-    show_clickable_nav: true,
     choices: ["1", "2", "3", "4", "5"],
     stimulus: HowVivid,
-    prompt: jsPsych.timelineVariable('prompt_rating_stage'),
-    data: jsPsych.timelineVariable("data"),
+    prompt: promptVivdness,
+    data: () => ({...jsPsych.timelineVariable('data'), stage: 'vividness'}),
     on_start: function() {
         document.documentElement.style.cursor = 'default';
     },
-    on_finish: function (data) {
-        data.rating = parseInt(data.response + 1);
-        document.documentElement.style.cursor = 'none';
-        if (save_data_locally != "on"){
-            saveData();
-        }
-    }
-};
-let feedback_2 = {
-    type: jsPsychHtmlKeyboardResponse,
-    choices: "NO_KEYS",
-    trial_duration: feedback2Duration,
-    stimulus: function () {
-        const choice_info = jsPsych.data.getLastTrialData().values()[0];
-        let stim = '<div style="color: black; font-size: 16pt; border: 8px solid black; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center;box-sizing: border-box;">You chose ' + parseInt(choice_info.response + 1) + '.' + '</div>';
-        return stim;
-    },
-    prompt: jsPsych.timelineVariable('prompt_feedback_2'),
-};
-let break_time = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: break_text,
-    choices: [" "],
-    on_start: function() {
-        $("#progressContainer").hide();
-    },
-    on_finish: function() {
-        $("#progressContainer").show();
-        document.documentElement.style.cursor = 'default';
+    on_finish: function(data) {
+        data.rating = Number(data.response) + 1;
+        const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+        data.trial_num = judgment.trial_num;
+        $("#progressBar").css("width", (data.trial_num / trials.length) * 100 + "%");
+        if (save_data_locally !== "on") saveData();
     },
 };
 
@@ -245,7 +190,7 @@ for (blockNum = 1; blockNum <= maxBlockNum; blockNum++){
         }
     }
 }
-const shuffleTrials = trials.sort(() => Math.random() - 0.5);
+const shuffleTrials = shuffle(trials);
 block1 = shuffleTrials;
 block2 = [];
 block3 = [];
@@ -265,10 +210,10 @@ let before_block_instruction_1 = {
 if (jump_to_questionnaire != "on") {
     timeline.push(before_block_instruction_1);
 }
- 
+
 let trial_structure = {
-    timeline: [fixation, image_stage, gap2, test_stage, feedback, rating_stage, feedback_2],
-}; 
+    timeline: [fixation, imagery_stage, presentation_stage, test_stage, too_slow_warning, rating_stage],
+};
 
 timeline.push({
     timeline: [trial_structure],
@@ -277,137 +222,31 @@ timeline.push({
 });
 
 
-// Make a trial.
-// trial_condition: 1 = no prime: triangle in the center; 2 = prime separate; 3 = prime occluded; 4 = prime complete
+// Visual demo: equal lengths and both directions of inequality.
 function generate_trial(practice, primeIndex, testIndex, blockNum) {
-    let trial;
-    let primeImage;
-    let trialImage;
-    let anchorImage;
-    let correct_response;
-    let correct_answer;
-    let test_shape;
-    let prime_shape;
-    let responseDuration;
-    let image_duration;
-    let imagery_duration;
-    let prompt_iti;
-    let prompt_fixation;
-    let prompt_gap1;
-    let prompt_image_stage;
-    let prompt_gap2;
-    let prompt_gap3;
-    let prompt_test_stage;
-    let prompt_feedback;
-    let prompt_rating_stage;
-    let prompt_feedback_2;
-    primeImage = demoPrimeStimulus();
-    anchorImage = demoImageryStimulus();
-    trialImage = demoTestStimulus(testIndex <= 2, testIndex - 1);
-    imagery_duration = imageryDuration;
-
-    if (testIndex == 1 || testIndex == 2){ // same
-        correct_response = keySame;
-        correct_answer = "same";
-        if (testIndex == 1){
-            test_shape = "complete";
-        } else if (testIndex == 2){
-            test_shape = "notched";
-        }
-    } else { // different
-        correct_response = keyDifferent;
-        correct_answer = "different";
-        if (testIndex == 3){
-            test_shape = "complete";
-        } else if (testIndex == 4){
-            test_shape = "notched";
-        }
-    }
-    if (primeIndex <= 4){
-        prime_shape = "circle";
-    } else {
-        prime_shape = "square";
-    }
-    if (practice == "practice_1"){  // same/different practice
-        image_duration = imageDuration;
-        prompt_iti = promptKey;
-        prompt_fixation = promptKey;
-        prompt_gap1 = promptKey;
-        prompt_image_stage = "<br>Imagine the pattern";
-        prompt_gap2 = "<br>Keep imagining";
-        prompt_test_stage = promptKey;
-        prompt_feedback = promptKey;
-        responseDuration = maxResponseTimePractice;
-    } else if (practice == "practice_2"){ // imagery practice
-        prompt_iti = promptPlaceholder;
-        prompt_fixation = promptPlaceholder;
-        prompt_gap1 = promptPlaceholder;
-        prompt_image_stage = "<br>Imagine the pattern";
-        prompt_gap2 = "<br>Imagine the pattern";
-        prompt_gap3 = "<br>Imagine the pattern";
-        prompt_test_stage = promptKey;
-        prompt_feedback = promptKey;
-        prompt_rating_stage = promptVivdness;
-        prompt_feedback_2 = promptVivdness;
-        responseDuration = maxResponseTime;
-        image_duration = imageDurationPractice;
-        imagery_duration = imageryDurationPractice;
-    } else if (practice == "practice_3"){ // combine practice
-        prompt_iti = promptPlaceholder;
-        prompt_fixation = promptPlaceholder;
-        prompt_gap1 = promptPlaceholder;
-        prompt_image_stage = "<br>Imagine the pattern";
-        prompt_gap2 = "<br>Imagine the pattern";
-        prompt_gap3 = "<br>Imagine the pattern";
-        prompt_test_stage = promptKey;
-        prompt_feedback = promptKey
-        prompt_rating_stage = promptVivdness;
-        prompt_feedback_2 = promptVivdness;
-        responseDuration = maxResponseTime;
-        image_duration = imageDuration;
-    } else {
-        image_duration = imageDuration;
-        prompt_iti = "";
-        prompt_fixation = "";
-        prompt_gap1 = "";
-        prompt_image_stage = "<br>Imagine the pattern";
-        prompt_gap2 = "<br>Imagine the pattern";
-        prompt_gap3 = "";
-        prompt_test_stage = "<br>Same / Different";
-        prompt_feedback = "";
-        prompt_rating_stage = promptVivdness;
-        prompt_feedback_2 = "";
-        responseDuration = maxResponseTime;
-    }
-    trial = {
-        prime_image: primeImage,
-        anchor_image: anchorImage,
-        stimulus: trialImage,
-        trial_duration: responseDuration, // same or different max response time
-        prompt_iti: prompt_iti,
-        prompt_fixation: prompt_fixation,
-        prompt_gap1: prompt_gap1,
-        prompt_image_stage: prompt_image_stage,
-        prompt_gap2: prompt_gap2,
-        prompt_gap3: prompt_gap3,
-        prompt_test_stage: prompt_test_stage,
-        prompt_feedback: prompt_feedback,
-        prompt_rating_stage: prompt_rating_stage,
-        prompt_feedback_2: prompt_feedback_2,
-        image_duration: image_duration,
-        imagery_duration: imagery_duration,
+    const imagery_position = imageryPositions[primeIndex - 1];
+    const lineLengths = [
+        [sameLineLength, sameLineLength],
+        [differentLineLength, differentLineLength],
+        [sameLineLength, differentLineLength],
+        [differentLineLength, sameLineLength],
+    ][testIndex - 1];
+    const isSame = lineLengths[0] === lineLengths[1];
+    return {
+        imagery_position,
+        stimulus: gridStimulus(lineLengths),
         data: {
             isPractice: practice,
-            correct_response: correct_response,
-            correct_answer: correct_answer,
-            prime_type: primeIndex,
-            prime_shape: prime_shape,
+            imagery_position,
+            left_line_length_px: lineLengths[0],
+            right_line_length_px: lineLengths[1],
+            presentation_duration_ms: imageDuration,
+            correct_response: isSame ? keySame : keyDifferent,
+            correct_answer: isSame ? 'same' : 'different',
             test_type: testIndex,
-            test_shape: test_shape,
             trial_condition: blockNum,
         },
-    }; 
-    return trial;
+    };
 }
 
 let thank_you = {
@@ -430,12 +269,12 @@ function saveData(done) {
             var response = JSON.parse(xhr.responseText);
             console.log(response.success);
         }
-        done(); // Ensure the next trial starts after data is saved
+        if (typeof done === "function") done();
     };
 
     // Get data from the last trial only and send it
     let lastTrialData = jsPsych.data.getLastTrialData().json();
     xhr.send(lastTrialData); // Send only the last trial's data
 }
-  
+
 jsPsych.run(timeline);

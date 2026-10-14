@@ -2,15 +2,10 @@ const review_mode = "off"; // if "on", the number of trials will be reduced for 
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire 
 
-let primeNum;
-let testNum;
-if (review_mode == "on") {
-    primeNum = 2;
-    testNum = 1;
-} else {
-    primeNum = 1;
-    testNum = 4;
-}
+// Placeholder cue; imagery conditions can be assigned later.
+const imageryPositions = ['middle / top / bottom'];
+const primeNum = imageryPositions.length;
+const testNum = 4;
 const repeatTimes = 1;
 
 const itiDuration = 500;
@@ -43,92 +38,31 @@ function svgDataUrl(svgMarkup) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
 }
 
-function demoTextElement(text, x, y, size, color, anchor) {
-    return '<text x="' + x + '" y="' + y + '" fill="' + color + '" font-family="Arial, Helvetica, sans-serif" font-size="' + size + '" font-weight="700" text-anchor="' + anchor + '">' + text + '</text>';
+// All stimuli share a 330 px canvas to keep their centers aligned.
+const gridCellSize = 66;
+const sameLineLength = 32;
+const differentLineLength = 48;
+const lineWidth = 3;
+
+function gridStimulus(lineLengths = null) {
+    const size = gridCellSize * 5;
+    let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#bfbfbf"/>`;
+    for (const column of [1, 3]) {
+        markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="black"/>`;
+    }
+    for (let i = 0; i <= 5; i++) {
+        const coordinate = i * gridCellSize;
+        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#222" stroke-width="2"/>`;
+    }
+    if (lineLengths) {
+        lineLengths.forEach((length, index) => {
+            const x = (index === 0 ? 1.5 : 3.5) * gridCellSize;
+            const y = size / 2;
+            markup += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#ff0000" stroke-width="${lineWidth}"/>`;
+        });
+    }
+    return svgDataUrl(markup + '</svg>');
 }
 
-function buildFixedPatternSvg({panelY = 40, panelHeight = 220, cells, label, labelY = 360, dashed = false}) {
-    const cellSize = 52;
-    const left = 90;
-    const top = panelY + 20;
-    const stroke = dashed ? 'stroke-dasharray="10 8"' : '';
-
-    let blackSquares = '';
-    cells.forEach(([cx, cy]) => {
-        const x = left + (cx - 1) * cellSize;
-        const y = top + (cy - 1) * cellSize;
-        blackSquares += '<rect x="' + x + '" y="' + y + '" width="' + cellSize + '" height="' + cellSize + '" fill="#111827"/>';
-    });
-
-    return svgDataUrl(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">' +
-        '<rect width="420" height="420" fill="#f2f2f2"/>' +
-        '<rect x="20" y="' + panelY + '" width="380" height="' + panelHeight + '" fill="#d8d8d8" stroke="#1b3a5a" stroke-width="4" ' + stroke + '/>' +
-        '<rect x="' + (left - 8) + '" y="' + (top - 8) + '" width="' + (cellSize * 3 + 16) + '" height="' + (cellSize * 3 + 16) + '" fill="none" stroke="#b0b0b0" stroke-width="2"/>' +
-        '<rect x="' + (left + 52) + '" y="' + (top + 52) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 104) + '" y="' + (top + 52) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 156) + '" y="' + (top + 52) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 52) + '" y="' + (top + 104) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 104) + '" y="' + (top + 104) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 156) + '" y="' + (top + 104) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 52) + '" y="' + (top + 156) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 104) + '" y="' + (top + 156) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        '<rect x="' + (left + 156) + '" y="' + (top + 156) + '" width="' + cellSize + '" height="' + cellSize + '" fill="#d8d8d8"/>' +
-        blackSquares +
-        (label ? '<text x="210" y="' + labelY + '" fill="#1f2937" font-family="Arial, Helvetica, sans-serif" font-size="20" text-anchor="middle">' + label + '</text>' : '') +
-        '</svg>'
-    );
-}
-
-function demoPrimeStimulus() {
-    return buildFixedPatternSvg({
-        panelY: 50,
-        panelHeight: 250,
-        label: 'Imagine middle / top / bottom',
-        labelY: 365,
-        cells: [[2, 1], [1, 2], [3, 2], [2, 3]]
-    });
-}
-
-function demoImageryStimulus() {
-    return buildFixedPatternSvg({
-        panelY: 40,
-        panelHeight: 260,
-        label: 'Imagine the pattern here',
-        labelY: 360,
-        cells: [[2, 1], [1, 2], [3, 2], [2, 3]],
-        dashed: true
-    });
-}
-
-function demoTestStimulus(isSame, variant) {
-    const sameCells = [[2, 1], [1, 2], [3, 2], [2, 3]];
-    const differentCells = [[2, 1], [1, 2], [3, 3], [2, 3]];
-    const cells = isSame ? sameCells : differentCells;
-    return buildFixedPatternSvg({
-        panelY: 40,
-        panelHeight: 260,
-        label: 'Same / Different',
-        labelY: 360,
-        cells: cells
-    });
-}
-
-const fixationImage = svgDataUrl(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">' +
-    '<rect width="420" height="420" fill="#ffffff"/>' +
-    '<text x="210" y="238" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="700" text-anchor="middle">+</text>' +
-    '</svg>'
-);
-const boxImage = demoImageryStimulus();
-const promptImagery = "<br>Imagine them in place";
-const promptImagery2 = "<br>Imagine the combined pattern";
-const promptImage = "<br>Focus on the shapes";
-
-const incorrectFeedback = '<div style="color: red; font-size: 20pt; border: 8px solid red; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">Incorrect.</div>'
-const tooSlowFeedback = '<div style="color: red; font-size: 16pt; border: 8px solid red; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">Too slow! <br> Press the spacebar to continue.</div>';
-const tooFastFeedback = '<div style="color: red; font-size: 16pt; border: 8px solid red; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center;box-sizing: border-box;">Do not press before the test shapes appear. <br> Press the spacebar to continue.</div>';
-const HowVivid = '<div style="color: black; font-size: 16pt; border: 8px solid black; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center;box-sizing: border-box;">How vivid?</div>';
-
-let illustrationImage = [];
-let illustrationGif = [];
+const fixationImage = svgDataUrl('<svg xmlns="http://www.w3.org/2000/svg" width="330" height="330"><rect x="2" y="2" width="326" height="326" fill="#d3d3d3" stroke="#10283f" stroke-width="4"/><text x="165" y="165" dominant-baseline="central" text-anchor="middle" font-family="Arial" font-size="32">+</text></svg>');
+const HowVivid = '<div class="task-panel">How vivid?</div>';
