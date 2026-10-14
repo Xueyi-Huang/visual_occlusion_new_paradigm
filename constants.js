@@ -76,5 +76,5 @@ function gridStimulus(lineLengths = null) {
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
-const fixationImage = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${taskFrameSize}" height="${taskFrameSize}"><rect width="${taskFrameSize}" height="${taskFrameSize}" fill="#d3d3d3"/>${taskFrameOutline()}<text x="${taskFrameSize / 2}" y="${taskFrameSize / 2}" dominant-baseline="central" text-anchor="middle" font-family="Arial" font-size="32">+</text></svg>`);
+const fixationText = '<div class="task-panel fixation-text">+</div>';
 const HowVivid = '<div class="task-panel">How vivid?</div>';

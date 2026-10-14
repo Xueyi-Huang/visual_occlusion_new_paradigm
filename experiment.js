@@ -57,21 +57,22 @@ const maxBlockNum = 1;
 // /* preload images */
 let preloadImages = {
     type: jsPsychPreload,
-    images: [fixationImage, gridStimulus(), ...Array.from({length: 4}, (_, i) => generate_trial('off', 1, i + 1, 1).stimulus)],
+    images: [gridStimulus(), ...Array.from({length: 4}, (_, i) => generate_trial('off', 1, i + 1, 1).stimulus)],
 };
 timeline.push(preloadImages);
 
 // A probe is shown without accepting responses, then replaced by the judgment screen.
 const fixation = {
-    type: jsPsychImageKeyboardResponse,
+    type: jsPsychHtmlKeyboardResponse,
     css_classes: ['trial-frame'],
-    stimulus: fixationImage,
+    stimulus: fixationText,
     choices: "NO_KEYS",
     trial_duration: fixationDuration,
     data: {stage: 'fixation'},
 };
 const imagery_stage = {
     type: jsPsychImageKeyboardResponse,
+    render_on_canvas: false, // Keep the SVG sharp on high-density displays.
     css_classes: ['trial-frame'],
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
@@ -81,6 +82,7 @@ const imagery_stage = {
 };
 const lines_stage = {
     type: jsPsychImageKeyboardResponse,
+    render_on_canvas: false,
     css_classes: ['trial-frame'],
     stimulus: jsPsych.timelineVariable('stimulus'),
     prompt: '<p>lines stage</p>',

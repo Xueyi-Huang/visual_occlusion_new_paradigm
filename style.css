@@ -56,6 +56,11 @@ body, html {
     font-size: 24px;
 }
 
+.fixation-text {
+    font-family: Arial, sans-serif;
+    font-size: 32px;
+}
+
 /* jsPsych adds trial classes to the content element itself. Center the box
    in the viewport and reserve space below it for prompts and controls. */
 .jspsych-content.trial-frame {
