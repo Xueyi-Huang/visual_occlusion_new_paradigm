@@ -63,54 +63,33 @@ let preloadImages = {
 timeline.push(preloadImages);
 
 // trial structure
-let iti = {
-    type: jsPsychImageKeyboardResponse,
-    choices: "NO_KEYS",
-    prompt: jsPsych.timelineVariable('prompt_iti'),
-    trial_duration: itiDuration,
-    stimulus: boxImage,
-};
 let fixation = {
     type: jsPsychImageKeyboardResponse,
     stimulus: fixationImage,
     choices: "NO_KEYS",
-    prompt: jsPsych.timelineVariable('prompt_fixation'),
+    prompt: "",
     trial_duration: fixationDuration,
-};
-let gap1 = {
-    type: jsPsychImageKeyboardResponse,
-    choices: "NO_KEYS",
-    prompt: jsPsych.timelineVariable('prompt_gap1'),
-    trial_duration: afterFixationInterval,
-    stimulus: boxImage,
 };
 let image_stage = {
     type: jsPsychImageKeyboardResponse,
     stimulus: jsPsych.timelineVariable('prime_image'),
     choices: "NO_KEYS",
     data: jsPsych.timelineVariable("data"),
-    prompt: jsPsych.timelineVariable('prompt_image_stage'),
+    prompt: "",
     trial_duration: jsPsych.timelineVariable('image_duration'),
 };
-let gap2 = { // for imagery experiments, gap 2 is the imagination time
+let gap2 = {
     type: jsPsychImageKeyboardResponse,
     choices: "NO_KEYS",
-    prompt: jsPsych.timelineVariable('prompt_gap2'),
+    prompt: "",
     stimulus: jsPsych.timelineVariable('anchor_image'),
     trial_duration: jsPsych.timelineVariable('imagery_duration'),
-};
-let gap3 = {
-    type: jsPsychImageKeyboardResponse,
-    choices: "NO_KEYS",
-    prompt: jsPsych.timelineVariable('prompt_gap3'),
-    trial_duration: gap3Duration,
-    stimulus: boxImage,
 };
 let test_stage = {
     type: jsPsychImageKeyboardResponse,
     stimulus: jsPsych.timelineVariable('stimulus'),
     choices: [keySame, keyDifferent],
-    prompt: jsPsych.timelineVariable('prompt_test_stage'),
+    prompt: "<div style='font-size:22px; margin-top: 10px;'>Same / Different</div>",
     trial_duration: jsPsych.timelineVariable('trial_duration'),
     data: jsPsych.timelineVariable("data"),
     on_finish: function(data){
@@ -215,10 +194,10 @@ let fullscreen_on = {
         estimate_frame_duration(function(frame_rate) {
             frame_duration = frame_rate;
             console.log("Estimated frame duration: ", frame_rate);
-        }, 5000, true);
+        }, 500, true);
         $("#progressbar").hide();
     },
-    delay_after: 5000
+    delay_after: 500
 };
 if (jump_to_questionnaire != "on") {
     timeline.push(fullscreen_on);
@@ -288,14 +267,9 @@ if (jump_to_questionnaire != "on") {
 }
  
 let trial_structure = {
-    timeline: [iti, fixation, gap1, image_stage, gap2, gap3, test_stage, feedback, rating_stage, feedback_2],
+    timeline: [fixation, image_stage, gap2, test_stage, feedback, rating_stage, feedback_2],
 }; 
-timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: "<div class='instructions left-aligned'><p>You will see a few trials from one condition only.</p><p>Press the space bar to begin.</p></div>",
-    choices: [" "],
-    post_trial_gap: 1000,
-});
+
 timeline.push({
     timeline: [trial_structure],
     timeline_variables: block1,
@@ -359,8 +333,8 @@ function generate_trial(practice, primeIndex, testIndex, blockNum) {
         prompt_iti = promptKey;
         prompt_fixation = promptKey;
         prompt_gap1 = promptKey;
-        prompt_image_stage = promptKey;
-        prompt_gap2 = promptKey;
+        prompt_image_stage = "<br>Imagine the pattern";
+        prompt_gap2 = "<br>Keep imagining";
         prompt_test_stage = promptKey;
         prompt_feedback = promptKey;
         responseDuration = maxResponseTimePractice;
@@ -368,9 +342,9 @@ function generate_trial(practice, primeIndex, testIndex, blockNum) {
         prompt_iti = promptPlaceholder;
         prompt_fixation = promptPlaceholder;
         prompt_gap1 = promptPlaceholder;
-        prompt_image_stage = promptImage;
-        prompt_gap2 = promptImagery;
-        prompt_gap3 = promptImagery;
+        prompt_image_stage = "<br>Imagine the pattern";
+        prompt_gap2 = "<br>Imagine the pattern";
+        prompt_gap3 = "<br>Imagine the pattern";
         prompt_test_stage = promptKey;
         prompt_feedback = promptKey;
         prompt_rating_stage = promptVivdness;
@@ -382,9 +356,9 @@ function generate_trial(practice, primeIndex, testIndex, blockNum) {
         prompt_iti = promptPlaceholder;
         prompt_fixation = promptPlaceholder;
         prompt_gap1 = promptPlaceholder;
-        prompt_image_stage = promptImage;
-        prompt_gap2 = promptImagery;
-        prompt_gap3 = promptImagery;
+        prompt_image_stage = "<br>Imagine the pattern";
+        prompt_gap2 = "<br>Imagine the pattern";
+        prompt_gap3 = "<br>Imagine the pattern";
         prompt_test_stage = promptKey;
         prompt_feedback = promptKey
         prompt_rating_stage = promptVivdness;
@@ -393,6 +367,16 @@ function generate_trial(practice, primeIndex, testIndex, blockNum) {
         image_duration = imageDuration;
     } else {
         image_duration = imageDuration;
+        prompt_iti = "";
+        prompt_fixation = "";
+        prompt_gap1 = "";
+        prompt_image_stage = "<br>Imagine the pattern";
+        prompt_gap2 = "<br>Imagine the pattern";
+        prompt_gap3 = "";
+        prompt_test_stage = "<br>Same / Different";
+        prompt_feedback = "";
+        prompt_rating_stage = promptVivdness;
+        prompt_feedback_2 = "";
         responseDuration = maxResponseTime;
     }
     trial = {
