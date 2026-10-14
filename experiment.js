@@ -45,13 +45,6 @@ jsPsych.data.addProperties({
 let frame_duration;
 let frame_rate;
 let trials = [];
-let trials_1 = [];
-let trials_2 = [];  
-let trials_3 = [];
-let trials_4 = [];
-let practice_1_trials = [];
-let practice_2_trials = [];
-let practice_3_trials = [];
 let block1 = [];
 let block2 = [];
 let block3 = [];
@@ -60,11 +53,12 @@ let real_trial_num = 1;
 let timeline = [];
 let practice;
 let blockNum;
+const maxBlockNum = 1;
 
 // /* preload images */
 let preloadImages = {
     type: jsPsychPreload,
-    images: [testImages, noPrimeImages, primeSepImages, primeOccImages, fixationImage, bigAnchorImage, smallAnchorImage, illustrationImage, boxImage, illustrationGif], 
+    images: [], 
 };
 timeline.push(preloadImages);
 
@@ -258,128 +252,11 @@ if (jump_to_questionnaire != "on") {
 }
 
 
-// INITIAL INSTRUCTIONS
-// practice_1: same or different
-let same_or_different_instructions = {
-    type: jsPsychInstructions,
-    pages: same_or_different_instruction_pages(),
-    show_clickable_nav: true,
-    post_trial_gap: 1000,
-    on_finish: function() {
-        document.documentElement.style.cursor = 'default';
-    }
-};
-if (jump_to_questionnaire != "on") {
-    timeline.push(same_or_different_instructions);
-}
-
-practice = "practice_1";
-for (blockNum = 1; blockNum <= 4; blockNum++){
-    for (let i = 1; i <= primeNum; i++) {
-        for (let j = 1; j <= testNum; j++) {
-            let trial = generate_trial(practice, i, j, blockNum);
-            trials_1.push(trial);
-        }
-    }
-}
-let practice_1_structure = {
-    timeline: [iti, fixation, gap1, test_stage, feedback],
-};
-if (review_mode == "on") {
-    practice_1_trials = [trials_1[0]];
-} else {
-    practice_1_trials = [trials_1[0], trials_1[31], trials_1[22], trials_1[17]];
-}
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [practice_1_structure], 
-        timeline_variables: practice_1_trials,
-        randomize_order: false
-    });
-}
-
-// practice_2: imagine in their original positions
-let imagination_instructions = {
-    type: jsPsychInstructions,
-    pages: imagination_instruction_pages(),
-    show_clickable_nav: true,
-    post_trial_gap: 1000,
-    on_finish: function() {
-        document.documentElement.style.cursor = 'default';
-    }
-};
-if (jump_to_questionnaire != "on") {
-    timeline.push(imagination_instructions);
-}
-
-practice = "practice_2";
-for (blockNum = 1; blockNum <= 4; blockNum++){
-    for (let i = 1; i <= primeNum; i++) {
-        for (let j = 1; j <= testNum; j++) {
-            let trial = generate_trial(practice, i, j, blockNum);
-            trials_2.push(trial);
-        }
-    }
-}
-let practice_2_structure = {
-    timeline: [iti, fixation, gap1, image_stage, gap2, gap3, rating_stage, feedback_2],
-};
-if (review_mode == "on") {
-    practice_2_trials = [trials_2[0]];
-} else {
-    practice_2_trials = [trials_2[6], trials_2[90], trials_2[42], trials_2[127]];
-}
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [practice_2_structure], 
-        timeline_variables: practice_2_trials,
-        randomize_order: false
-    });
-}
-
-// practice_3: combine the same/different task with the imagination task
-let practice_instructions = {
-    type: jsPsychInstructions,
-    pages: practice_instruction_pages(),
-    show_clickable_nav: true,
-    post_trial_gap: 1000,
-    on_start: function() {
-        document.documentElement.style.cursor = 'default';
-    },
-};
-if (jump_to_questionnaire != "on") {
-    timeline.push(practice_instructions);
-}
-
-practice = "practice_3";
-for (blockNum = 1; blockNum <= 4; blockNum++){
-    for (let i = 1; i <= primeNum; i++) {
-        for (let j = 1; j <= testNum; j++) {
-            let trial = generate_trial(practice, i, j, blockNum);
-            trials_3.push(trial);
-        }
-    }
-}
-let practice_3_structure = {
-    timeline: [iti, fixation, gap1, image_stage, gap2, gap3, test_stage, feedback, rating_stage, feedback_2],
-};
-if (review_mode == "on") {
-    practice_3_trials = [trials_3[0]];
-} else {
-    practice_3_trials = [trials_3[80], trials_3[107], trials_3[20], trials_3[37], trials_3[58], trials_3[88]];
-}
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [practice_3_structure], 
-        timeline_variables: practice_3_trials,
-        randomize_order: false
-    });
-}
-
+// Quick demo version: no practice instructions or extra blocks.
 
 // make real trials
 practice = "off";
-for (blockNum = 1; blockNum <= 4; blockNum++){
+for (blockNum = 1; blockNum <= maxBlockNum; blockNum++){
     for (let r = 0; r < repeatTimes; r++){
         for (let i = 1; i <= primeNum; i++) {
             for (let j = 1; j <= testNum; j++) {
@@ -390,10 +267,10 @@ for (blockNum = 1; blockNum <= 4; blockNum++){
     }
 }
 const shuffleTrials = trials.sort(() => Math.random() - 0.5);
-block1 = shuffleTrials.slice(0, shuffleTrials.length / 4);
-block2 = shuffleTrials.slice(shuffleTrials.length / 4, shuffleTrials.length / 2);
-block3 = shuffleTrials.slice(shuffleTrials.length / 2, shuffleTrials.length / 4 * 3);
-block4 = shuffleTrials.slice(shuffleTrials.length / 4 * 3);
+block1 = shuffleTrials;
+block2 = [];
+block3 = [];
+block4 = [];
 
 
 // start block 1
@@ -413,37 +290,17 @@ if (jump_to_questionnaire != "on") {
 let trial_structure = {
     timeline: [iti, fixation, gap1, image_stage, gap2, gap3, test_stage, feedback, rating_stage, feedback_2],
 }; 
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [trial_structure], 
-        timeline_variables: block1,
-        randomize_order: false
-    });
-    timeline.push(break_time);
-}
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [trial_structure], 
-        timeline_variables: block2,
-        randomize_order: false
-    });
-    timeline.push(break_time);
-}
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [trial_structure], 
-        timeline_variables: block3,
-        randomize_order: false
-    });
-    timeline.push(break_time);
-}
-if (jump_to_questionnaire != "on") {
-    timeline.push({
-        timeline: [trial_structure], 
-        timeline_variables: block4,
-        randomize_order: false
-    });
-}
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: "<div class='instructions left-aligned'><p>You will see a few trials from one condition only.</p><p>Press the space bar to begin.</p></div>",
+    choices: [" "],
+    post_trial_gap: 1000,
+});
+timeline.push({
+    timeline: [trial_structure],
+    timeline_variables: block1,
+    randomize_order: false
+});
 
 
 // Make a trial.
@@ -470,24 +327,10 @@ function generate_trial(practice, primeIndex, testIndex, blockNum) {
     let prompt_feedback;
     let prompt_rating_stage;
     let prompt_feedback_2;
-    if (blockNum == 1){
-        primeImage = 'image/' + primeIndex + '/no_prime_triangle_frame' + '.svg';
-        anchorImage = 'image/' + primeIndex + '/anchor_big' + '.svg';
-        imagery_duration = imageryDuration;
-    } else if (blockNum == 2){
-        primeImage = 'image/' + primeIndex + '/prime_sep_frame' + '.svg';
-        anchorImage = 'image/' + primeIndex + '/anchor_big' + '.svg';
-        imagery_duration = imageryDuration;
-    } else if (blockNum == 3){
-        primeImage = 'image/' + primeIndex + '/prime_occ_frame' + '.svg';
-        anchorImage = 'image/' + primeIndex + '/anchor_small' + '.svg';
-        imagery_duration = imageryDuration;
-    } else if (blockNum == 4){
-        primeImage = 'image/' + primeIndex + '/prime_complete_frame' + '.svg';
-        anchorImage = 'image/' + primeIndex + '/anchor_small' + '.svg';
-        imagery_duration = imageryDuration;
-    }
-    trialImage = 'image/' + primeIndex + '/test' + testIndex + '.svg';
+    primeImage = demoPrimeStimulus();
+    anchorImage = demoImageryStimulus();
+    trialImage = demoTestStimulus(testIndex <= 2, testIndex - 1);
+    imagery_duration = imageryDuration;
 
     if (testIndex == 1 || testIndex == 2){ // same
         correct_response = keySame;
@@ -592,48 +435,6 @@ let thank_you = {
     }
 };
 timeline.push(thank_you);
-
-// questionaire
-let questionaire = {
-    type: jsPsychSurveyText,
-    on_start: function() {
-        document.documentElement.style.cursor = 'default';
-    },
-    preamble: "<br><br>Post-experiment questionnaire",
-    questions: [
-        {prompt: "1. Did you use any particular strategy when imagining the shapes?", name: "imagery_strategy", rows: 4, columns: 64, required: true},
-        {prompt: "2. Did you use any particular strategy when doing the same/different task?", name: "strategy", rows: 4, columns: 64, required: true},
-        {prompt: "3. Do you feel you were able to follow the task instructions correctly?", name: "instructions", rows: 4, columns: 64, required: true}, 
-        {prompt: "4. Do you have any other comments for us about the experiment or how you felt doing it?", rows: 4, columns: 64, name: "comments", required: true},
-    ], 
-    on_finish: function(data) {
-        data.responses = JSON.stringify(data.response);
-        jsPsych.data.get().addToLast({
-            response: data.responses
-        });
-        if (save_data_locally != "on"){
-            saveData();
-        }
-    }
-};
-timeline.push(questionaire);
-
-// Demographics
-let demographics = {
-    type: jsPsychSurveyHtmlForm,
-    html: demographics_html,
-    button_label: 'Next',
-    on_finish: function(data) {
-        data.responses = JSON.stringify(data.response);
-        jsPsych.data.get().addToLast({
-            response: data.responses
-        });
-        if (save_data_locally != "on"){
-            saveData();
-        }
-    },
-};
-timeline.push(demographics);
 
 // Function to save data after each trial
 function saveData(done) {

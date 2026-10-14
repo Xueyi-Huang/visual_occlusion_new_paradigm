@@ -1,5 +1,5 @@
 const review_mode = "off"; // if "on", the number of trials will be reduced for reviewing the experiment
-const save_data_locally = "off"; // if "on", the data will be saved locally after finishing the whole experiment
+const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire 
 
 let primeNum;
@@ -8,7 +8,7 @@ if (review_mode == "on") {
     primeNum = 2;
     testNum = 1;
 } else {
-    primeNum = 8;
+    primeNum = 1;
     testNum = 4;
 }
 const repeatTimes = 1;
@@ -39,7 +39,61 @@ const promptKey = "<br>S = Same, D = Different";
 
 const promptVivdness = "<br>1 (Not vivid at all) - 5 (Perfectly vivid)";
 const promptPlaceholder = "<br><span style='color: lightgray;'>placeholder</span>";
-const boxImage = 'image/box/box.svg';
+function svgDataUrl(svgMarkup) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
+}
+
+function demoTextElement(text, x, y, size, color, anchor) {
+    return '<text x="' + x + '" y="' + y + '" fill="' + color + '" font-family="Arial, Helvetica, sans-serif" font-size="' + size + '" font-weight="700" text-anchor="' + anchor + '">' + text + '</text>';
+}
+
+function demoPrimeStimulus() {
+    return svgDataUrl(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">' +
+        '<rect width="420" height="420" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>' +
+        demoTextElement('Imagine these shapes', 210, 42, 20, '#374151', 'middle') +
+        demoTextElement('●', 148, 238, 88, '#111827', 'middle') +
+        demoTextElement('■', 272, 238, 88, '#111827', 'middle') +
+        '</svg>'
+    );
+}
+
+function demoImageryStimulus() {
+    return svgDataUrl(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">' +
+        '<rect width="420" height="420" fill="#ffffff" stroke="#cbd5e1" stroke-width="3" stroke-dasharray="10 8"/>' +
+        demoTextElement('Imagine the shapes here', 210, 220, 20, '#94a3b8', 'middle') +
+        '</svg>'
+    );
+}
+
+function demoTestStimulus(isSame, variant) {
+    const sameTrials = [
+        {left: '●', right: '●', corner: '△', cornerTop: 28, cornerLeft: 20},
+        {left: '■', right: '■', corner: '●', cornerTop: 28, cornerLeft: 332},
+    ];
+    const differentTrials = [
+        {left: '●', right: '■', corner: '△', cornerTop: 332, cornerLeft: 20},
+        {left: '▲', right: '●', corner: '■', cornerTop: 332, cornerLeft: 332},
+    ];
+    const choice = isSame ? sameTrials[variant % sameTrials.length] : differentTrials[variant % differentTrials.length];
+    return svgDataUrl(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">' +
+        '<rect width="420" height="420" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>' +
+        demoTextElement(choice.corner, choice.cornerLeft + 24, choice.cornerTop + 40, 50, '#9ca3af', 'middle') +
+        demoTextElement(choice.left, 148, 238, 86, '#111827', 'middle') +
+        demoTextElement(choice.right, 272, 238, 86, '#111827', 'middle') +
+        '</svg>'
+    );
+}
+
+const fixationImage = svgDataUrl(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">' +
+    '<rect width="420" height="420" fill="#ffffff"/>' +
+    '<text x="210" y="238" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="700" text-anchor="middle">+</text>' +
+    '</svg>'
+);
+const boxImage = demoImageryStimulus();
 const promptImagery = "<br>Imagine them in place";
 const promptImagery2 = "<br>Imagine the combined pattern";
 const promptImage = "<br>Focus on the shapes";
@@ -49,32 +103,5 @@ const tooSlowFeedback = '<div style="color: red; font-size: 16pt; border: 8px so
 const tooFastFeedback = '<div style="color: red; font-size: 16pt; border: 8px solid red; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center;box-sizing: border-box;">Do not press before the test shapes appear. <br> Press the spacebar to continue.</div>';
 const HowVivid = '<div style="color: black; font-size: 16pt; border: 8px solid black; width: 400px; height: 400px; display: flex; justify-content: center; align-items: center;box-sizing: border-box;">How vivid?</div>';
 
-let testImages = [];
-let noPrimeImages = [];
-let primeSepImages = [];
-let primeOccImages = [];
-let primeCompleteImages = [];
-let bigAnchorImage = [];
-let smallAnchorImage = [];
-for (let i = 1; i <= 8; i++) {
-    let myNoPrimeImage = 'image/' + i + '/no_prime_triangle_frame' + '.svg';
-    let myPrimeSepImages = 'image/' + i + '/prime_sep_frame' + '.svg';
-    let myPrimeOccImages = 'image/' + i + '/prime_occ_frame' + '.svg';
-    let myPrimeCompleteImages = 'image/' + i + '/prime_complete_frame' + '.svg';
-    let myBigAnchorImage = 'image/' + i + '/anchor_big' + '.svg';
-    let mySmallAnchorImage = 'image/' + i + '/anchor_small' + '.svg';
-    noPrimeImages.push(myNoPrimeImage);
-    primeSepImages.push(myPrimeSepImages);
-    primeOccImages.push(myPrimeOccImages);
-    primeCompleteImages.push(myPrimeCompleteImages);
-    bigAnchorImage.push(myBigAnchorImage);
-    smallAnchorImage.push(mySmallAnchorImage);
-    for (let j = 1; j <= 4; j++) {
-        let myTestImage = 'image/' + i + '/test' + j + '.svg';
-        testImages.push(myTestImage);
-    }
-}
-
-const fixationImage = 'image/fixation/fixation.svg';
-const illustrationImage = ['image/illustration/illustration1.svg', 'image/illustration/illustration2.svg', 'image/illustration/illustration3.svg', 'image/illustration/illustration4.svg', 'image/illustration/illustration5.svg', 'image/illustration/illustration6.svg', 'image/illustration/illustration7.svg', 'image/illustration/illustration8.svg', 'image/illustration/illustration9.svg', 'image/illustration/illustration10.png', 'image/illustration/illustration11.svg', 'image/illustration/illustration12.png', 'image/illustration/illustration13.png', 'image/illustration/illustration14.png', 'image/illustration/illustration15.png', 'image/illustration/illustration16.png', 'image/illustration/illustration17.png'];
-const illustrationGif =['image/illustration/gif1.gif', 'image/illustration/gif2.gif'];
+let illustrationImage = [];
+let illustrationGif = [];
