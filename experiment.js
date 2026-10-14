@@ -101,6 +101,7 @@ const test_stage = {
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
     on_finish: function(data) {
         data.timed_out = data.response === null;
+        data.too_fast = !data.timed_out && data.rt !== null && data.rt <= minResponseTime;
         data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
         data.trial_num = real_trial_num++;
         if (save_data_locally !== "on") saveData();
@@ -110,13 +111,47 @@ const too_slow_warning = {
     timeline: [{
         type: jsPsychHtmlKeyboardResponse,
         css_classes: ['trial-frame'],
-        stimulus: '<div class="task-panel">Too slow!<br>Press the space bar to continue.</div>',
+        stimulus: '<div class="task-panel feedback-incorrect">Too slow!<br>Press the space bar to continue.</div>',
         choices: [' '],
         response_ends_trial: true,
         data: {stage: 'too_slow_warning'},
     }],
     conditional_function: function() {
         return jsPsych.data.getLastTrialData().values()[0].timed_out === true;
+    },
+};
+const too_fast_warning = {
+    timeline: [{
+        type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['trial-frame'],
+        stimulus: '<div class="task-panel feedback-incorrect">Do not press the key before you see the lines.<br>Press the space bar to continue.</div>',
+        choices: [' '],
+        response_ends_trial: true,
+        data: {stage: 'too_fast_warning'},
+    }],
+    conditional_function: function() {
+        const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+        return judgment.too_fast === true;
+    },
+};
+const response_feedback = {
+    timeline: [{
+        type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['trial-frame'],
+        stimulus: function() {
+            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+            return `<div class="task-panel ${judgment.correct ? 'feedback-correct' : 'feedback-incorrect'}">${judgment.correct ? 'Correct!' : 'Incorrect'}</div>`;
+        },
+        choices: 'NO_KEYS',
+        trial_duration: feedbackDuration,
+        data: function() {
+            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+            return {stage: 'feedback', correct: judgment.correct, trial_num: judgment.trial_num};
+        },
+    }],
+    conditional_function: function() {
+        const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+        return !judgment.timed_out && !judgment.too_fast;
     },
 };
 const rating_stage = {
@@ -226,7 +261,7 @@ if (jump_to_questionnaire != "on") {
 }
 
 let trial_structure = {
-    timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, rating_stage],
+    timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
 };
 
 timeline.push({

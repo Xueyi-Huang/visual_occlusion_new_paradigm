@@ -61,6 +61,16 @@ body, html {
     font-size: 32px;
 }
 
+.feedback-correct {
+    color: green;
+    border-color: green;
+}
+
+.feedback-incorrect {
+    color: red;
+    border-color: red;
+}
+
 .rating-panel {
     flex-direction: column;
     gap: 24px;

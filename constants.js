@@ -11,13 +11,10 @@ const repeatTimes = 1;
 const itiDuration = 500;
 const fixationDuration = 500;
 const linesDuration = 250;
-const imageryDuration = 2000;
-const incorrectDuration = 800;
-const correctDuration = 900;
-const feedback2Duration = 600;
+const imageryDuration = 4000;
+const feedbackDuration = 1000;
 const maxResponseTime = 2000;
-const afterFixationInterval = 250;
-const tooFastResponseTime = 200;
+const minResponseTime = 200;
 
 const imageDurationPractice = 1500;
 const maxResponseTimePractice = 2000;
