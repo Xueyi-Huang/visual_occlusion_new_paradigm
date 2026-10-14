@@ -1,0 +1,54 @@
+<!--v10 is a within-subject design. In the first block, subjects do a no-prime task and need to imagine a central triangle and a corner shape. In the second block, they imagine two separate shapes in their original places. Then they do a imagery occlusion condition. Lastly, they imagine two shapes with the central shape presented completely. -->
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>Same or Different?</title>
+		<link
+			href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css"
+			rel="stylesheet"
+			type="text/css" />
+		<link
+			rel="stylesheet"
+			type="text/css"
+			href="style.css" />
+	</head>
+	<body>
+		<div id="progressContainer">
+			<div
+				class="progress"
+				id="progressText">
+				Study Progress
+			</div>
+			<div
+				class="progress"
+				id="progressOutline">
+				<div
+					class="progress"
+					id="progressBar"></div>
+			</div>
+		</div>
+		<div id="contentContainer">
+			<div id="jspsych-target"></div>
+		</div>
+	</body>
+	<script src="jquery-3.4.1.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+	<script src="https://unpkg.com/jspsych@7.0.0"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.3"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.1"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.0.0"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.1"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+	<script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.3"></script>
+	<script src="utilities.js"></script>
+	<script src="constants.js"></script>
+	<script src="instructions.js"></script>
+	<script src="experiment.js"></script>
+</html>

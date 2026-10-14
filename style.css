@@ -1,0 +1,146 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: lightgray;
+    flex-direction: column;
+}
+
+#jspsych-target {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: -50px;
+}
+
+.instructions {
+    max-width: 896px;
+    margin: auto;
+}
+
+.left-aligned {
+    text-align: left;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 75%;
+  }
+
+.jspsych-content-wrapper {
+    background-color: lightgray;
+    width: 900px;
+}
+
+#jspsych-image-keyboard-response-stimulus {
+    width: 400px; 
+    height: 400px;
+    border: 8px solid black; 
+    box-sizing: border-box; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+}
+
+#jspsych-survey-multi-choice-form {
+    max-width: 800px;
+    text-align: left;
+    font-size: 12pt;
+    margin-top: 60px;
+    margin-left: 80px;
+    margin-bottom: 60px;
+}
+
+.jspsych-survey-text-preamble{
+    font-size: 16pt;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+.jspsych-survey-text{
+    font-size: 12pt;
+}
+
+fieldset {
+    display: table;
+}
+    
+fieldset p {
+    display: table-row;
+}
+
+fieldset input,
+fieldset select,
+fieldset label {
+    display: table-cell;
+}
+
+fieldset label {
+    text-align: left;
+}
+
+input {
+    font-family: "Open Sans", "Arial", sans-serif;
+    font-size: 14pt;
+    font-weight: normal;
+    color: black;
+}
+
+select {
+    font-family: "Open Sans", "Arial", sans-serif;
+    font-size: 14pt;
+    font-weight: normal;
+    color: black;
+}
+
+#contentContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    margin-top: -30px;
+}
+
+#progressContainer {
+    display: none;
+    width: 100%;
+    text-align: center;
+    margin-top: 40px;
+}
+  
+.progress {
+    height: 15px;
+}
+
+#progressText {
+    font-size: 14pt;
+    font-family: "Open Sans", "Arial", sans-serif;
+    color: black;
+    font-weight: bold;
+    margin: 10px;
+}
+
+#progressOutline {
+    display: inline-block;
+    background: white;
+    border: 3px solid black;
+    width: 100px;
+    margin: 10px;
+}
+
+#progressBar {
+    background: gray;
+    width: 0px;
+}
+
+#jspsych-html-button-response-btngroup {
+    position: absolute;
+    margin-top: -160px;
+    margin-left: 78px;
+}
