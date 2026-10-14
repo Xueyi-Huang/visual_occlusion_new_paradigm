@@ -10,7 +10,7 @@ const repeatTimes = 1;
 
 const itiDuration = 500;
 const fixationDuration = 500;
-const linesDuration = 2500;
+const linesDuration = 250;
 const imageryDuration = 2000;
 const incorrectDuration = 800;
 const correctDuration = 900;
@@ -29,18 +29,16 @@ let debriefURL = "consent_and_debriefing/debriefing.html" + '?' + splitURL;
 
 const keySame = 'S';
 const keyDifferent = 'D';
-const promptKey = "<br>S = Same, D = Different";
 
-const promptVivdness = "<br>1 (Not vivid at all) - 5 (Perfectly vivid)";
 const promptPlaceholder = "<br><span style='color: lightgray;'>placeholder</span>";
 function svgDataUrl(svgMarkup) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
 }
 
-// All stimuli share a 330 px canvas to keep their centers aligned.
+// All stimuli share the same canvas size (400) to keep their centers aligned.
 const gridCellSize = 80;
 const taskFrameSize = gridCellSize * 5;
-const taskFrameBorderWidth = 4;
+const taskFrameBorderWidth = 6;
 const taskFrameBorderColor = 'black';
 document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
 document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
@@ -63,7 +61,7 @@ function gridStimulus(lineLengths = null) {
     }
     for (let i = 1; i < 5; i++) {
         const coordinate = i * gridCellSize;
-        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#222" stroke-width="2"/>`;
+        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="1" stroke-dasharray="5 5"/>`;
     }
     if (lineLengths) {
         lineLengths.forEach((length, index) => {

@@ -93,9 +93,9 @@ const lines_stage = {
 const test_stage = {
     type: jsPsychHtmlKeyboardResponse,
     css_classes: ['trial-frame'],
-    stimulus: '<div class="task-panel">Same or different<br>length?</div>',
+    stimulus: '<div class="task-panel">Same or different length?</div>',
     choices: [keySame, keyDifferent],
-    prompt: promptKey,
+    prompt: '<p>S = Same, D = Different</p>',
     trial_duration: maxResponseTime,
     response_ends_trial: true,
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
@@ -123,8 +123,8 @@ const rating_stage = {
     type: jsPsychHtmlButtonResponse,
     css_classes: ['trial-frame'],
     choices: ["1", "2", "3", "4", "5"],
-    stimulus: '<div class="task-panel rating-panel"><div>How vivid?</div></div>',
-    prompt: promptVivdness,
+    stimulus: '<div class="task-panel rating-panel">How vivid?</div>',
+    prompt: '<p>1 (Not vivid at all) - 5 (Perfectly vivid)</p>',
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'vividness'}),
     on_start: function() {
         document.documentElement.style.cursor = 'default';
