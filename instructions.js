@@ -4,7 +4,7 @@ const good_frame_text = '<p>Display check complete. Click Next to read the instr
 const before_block_text_1 = `<div class="instructions left-aligned">
     <p>Keep your gaze at the center of the screen throughout each trial.</p>
     <p>A gray 5×5 grid contains two black squares. The cue below the grid reads “Imagine middle / top / bottom”. This is a visual demo; imagery conditions will be configured later.</p>
-    <p>Next, two red lines will appear at the middle of the black squares for only ${imageDuration} ms. Compare the lengths of these two visible lines.</p>
+    <p>Next, two red lines will appear at the middle of the black squares for only ${linesDuration} ms. Compare the lengths of these two visible lines.</p>
     <p>After the lines disappear, press <strong>${keySame}</strong> for the same length or <strong>${keyDifferent}</strong> for different lengths. Respond as quickly and accurately as possible, within ${maxResponseTime / 1000} seconds. If you miss the deadline, a “Too slow!” warning will appear; press the space bar to continue to the vividness rating.</p>
     <p>Finally, rate the vividness of your mental image from 1 (not vivid at all) to 5 (perfectly vivid), using the mouse.</p>
     <p>Press the space bar to start.</p>

@@ -10,7 +10,7 @@ const repeatTimes = 1;
 
 const itiDuration = 500;
 const fixationDuration = 500;
-const imageDuration = 250;
+const linesDuration = 2500;
 const imageryDuration = 2000;
 const gap3Duration = 250;
 const incorrectDuration = 800;
@@ -40,17 +40,29 @@ function svgDataUrl(svgMarkup) {
 
 // All stimuli share a 330 px canvas to keep their centers aligned.
 const gridCellSize = 66;
+const taskFrameSize = gridCellSize * 5;
+const taskFrameBorderWidth = 4;
+const taskFrameBorderColor = '#10283f';
+document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
+document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
+document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
+
+function taskFrameOutline() {
+    const inset = taskFrameBorderWidth / 2;
+    const extent = taskFrameSize - taskFrameBorderWidth;
+    return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
+}
 const sameLineLength = 32;
 const differentLineLength = 48;
 const lineWidth = 3;
 
 function gridStimulus(lineLengths = null) {
-    const size = gridCellSize * 5;
+    const size = taskFrameSize;
     let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#bfbfbf"/>`;
     for (const column of [1, 3]) {
         markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="black"/>`;
     }
-    for (let i = 0; i <= 5; i++) {
+    for (let i = 1; i < 5; i++) {
         const coordinate = i * gridCellSize;
         markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#222" stroke-width="2"/>`;
     }
@@ -61,8 +73,8 @@ function gridStimulus(lineLengths = null) {
             markup += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#ff0000" stroke-width="${lineWidth}"/>`;
         });
     }
-    return svgDataUrl(markup + '</svg>');
+    return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
-const fixationImage = svgDataUrl('<svg xmlns="http://www.w3.org/2000/svg" width="330" height="330"><rect x="2" y="2" width="326" height="326" fill="#d3d3d3" stroke="#10283f" stroke-width="4"/><text x="165" y="165" dominant-baseline="central" text-anchor="middle" font-family="Arial" font-size="32">+</text></svg>');
+const fixationImage = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${taskFrameSize}" height="${taskFrameSize}"><rect width="${taskFrameSize}" height="${taskFrameSize}" fill="#d3d3d3"/>${taskFrameOutline()}<text x="${taskFrameSize / 2}" y="${taskFrameSize / 2}" dominant-baseline="central" text-anchor="middle" font-family="Arial" font-size="32">+</text></svg>`);
 const HowVivid = '<div class="task-panel">How vivid?</div>';

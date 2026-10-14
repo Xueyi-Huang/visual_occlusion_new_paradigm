@@ -64,6 +64,7 @@ timeline.push(preloadImages);
 // A probe is shown without accepting responses, then replaced by the judgment screen.
 const fixation = {
     type: jsPsychImageKeyboardResponse,
+    css_classes: ['trial-frame'],
     stimulus: fixationImage,
     choices: "NO_KEYS",
     trial_duration: fixationDuration,
@@ -71,21 +72,25 @@ const fixation = {
 };
 const imagery_stage = {
     type: jsPsychImageKeyboardResponse,
+    css_classes: ['trial-frame'],
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
-    prompt: '<p>Imagine<br>Middle / top / bottom</p>',
+    prompt: '<p>Imagine occluder</p>',
     trial_duration: imageryDuration,
     data: {stage: 'imagery'},
 };
-const presentation_stage = {
+const lines_stage = {
     type: jsPsychImageKeyboardResponse,
+    css_classes: ['trial-frame'],
     stimulus: jsPsych.timelineVariable('stimulus'),
+    prompt: '<p>lines stage</p>',
     choices: "NO_KEYS",
-    trial_duration: imageDuration,
+    trial_duration: linesDuration,
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
 };
 const test_stage = {
     type: jsPsychHtmlKeyboardResponse,
+    css_classes: ['trial-frame'],
     stimulus: '<div class="task-panel">Same or different<br>length?</div>',
     choices: [keySame, keyDifferent],
     prompt: promptKey,
@@ -102,6 +107,7 @@ const test_stage = {
 const too_slow_warning = {
     timeline: [{
         type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['trial-frame'],
         stimulus: '<div class="task-panel">Too slow!<br>Press the space bar to continue.</div>',
         choices: [' '],
         response_ends_trial: true,
@@ -113,6 +119,7 @@ const too_slow_warning = {
 };
 const rating_stage = {
     type: jsPsychHtmlButtonResponse,
+    css_classes: ['trial-frame'],
     choices: ["1", "2", "3", "4", "5"],
     stimulus: HowVivid,
     prompt: promptVivdness,
@@ -212,7 +219,7 @@ if (jump_to_questionnaire != "on") {
 }
 
 let trial_structure = {
-    timeline: [fixation, imagery_stage, presentation_stage, test_stage, too_slow_warning, rating_stage],
+    timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, rating_stage],
 };
 
 timeline.push({
@@ -240,7 +247,7 @@ function generate_trial(practice, primeIndex, testIndex, blockNum) {
             imagery_position,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
-            presentation_duration_ms: imageDuration,
+            presentation_duration_ms: linesDuration,
             correct_response: isSame ? keySame : keyDifferent,
             correct_answer: isSame ? 'same' : 'different',
             test_type: testIndex,

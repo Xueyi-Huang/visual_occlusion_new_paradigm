@@ -38,22 +38,48 @@ body, html {
 }
 
 #jspsych-image-keyboard-response-stimulus {
-    width: 330px;
-    height: 330px;
+    width: var(--task-frame-size);
+    height: var(--task-frame-size);
     display: block;
     margin: 0 auto;
 }
 
 .task-panel {
-    width: 330px;
-    height: 330px;
-    border: 4px solid #10283f;
+    width: var(--task-frame-size);
+    height: var(--task-frame-size);
+    border: var(--task-frame-border-width) solid var(--task-frame-border-color);
     background: #d3d3d3;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 24px;
+}
+
+/* jsPsych adds trial classes to the content element itself. Center the box
+   in the viewport and reserve space below it for prompts and controls. */
+.jspsych-content.trial-frame {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 900px;
+    max-width: 100vw;
+    height: calc(var(--task-frame-size) + 140px);
+    padding-top: calc(var(--task-frame-size) + 20px);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin: 0;
+    transform: translate(-50%, calc(var(--task-frame-size) / -2));
+}
+
+.trial-frame #jspsych-image-keyboard-response-stimulus,
+.trial-frame #jspsych-html-keyboard-response-stimulus,
+.trial-frame #jspsych-html-button-response-stimulus {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
 }
 
 #jspsych-survey-multi-choice-form {
