@@ -15,10 +15,11 @@ let jsPsych = initJsPsych({
 
 // capture info from Prolific
 let subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
-if (subject_id == null){ // if not on Prolific, there will be no subject_id. But I still need one to shuffle the trials.
-    subject_id = 0;
-}
-Math.seedrandom(subject_id); // shuffle the trials in a certain order
+if (subject_id == null) subject_id = 0;
+Math.seedrandom(subject_id); // Reproduce assignment and trial order for this participant.
+const squareColor = Math.random() < 0.5 ? 'black' : 'white';
+const occluderColor = squareColor === 'black' ? 'white' : 'black';
+initializeTaskInstructions();
 let study_id = jsPsych.data.getURLVariable('STUDY_ID');
 let session_id = jsPsych.data.getURLVariable('SESSION_ID');
 let windowHeight = window.innerHeight;
@@ -31,6 +32,8 @@ let browserVersion = browserInfo[1];
 
 jsPsych.data.addProperties({
     subject_id: subject_id,
+    square_color: squareColor,
+    occluder_color: occluderColor,
     study_id: study_id,
     session_id: session_id,
     windowHeight: windowHeight,
@@ -76,7 +79,7 @@ const imagery_stage = {
     css_classes: ['trial-frame'],
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
-    prompt: '<p>Imagine an occluder in the middle</p>',
+    prompt: `<p>Imagine a ${occluderColor} occluder in the middle</p>`,
     trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
     data: {stage: 'imagery'},
 };

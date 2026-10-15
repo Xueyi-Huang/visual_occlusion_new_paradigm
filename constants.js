@@ -57,7 +57,7 @@ function gridStimulus(lineLengths = null) {
     const size = taskFrameSize;
     let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="lightgray"/>`;
     for (const column of [1, 3]) {
-        markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="black"/>`;
+        markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="${squareColor}"/>`;
     }
     for (let i = 1; i < 5; i++) {
         const coordinate = i * gridCellSize;
@@ -139,5 +139,5 @@ const percentageOptions = ["0%-20%", "20%-40%", "40%-60%", "60%-80%", "80%-100%"
 function occluderIllustration() {
     const markup = decodeURIComponent(gridStimulus().split(',')[1]);
     return svgDataUrl(markup.replace('</svg>',
-        `<rect x="${2 * gridCellSize}" y="${taskFrameBorderWidth}" width="${gridCellSize}" height="${taskFrameSize - 2 * taskFrameBorderWidth}" fill="#777"/>` + taskFrameOutline() + '</svg>'));
+        `<rect x="${2 * gridCellSize}" y="${gridCellSize}" width="${gridCellSize}" height="${3 * gridCellSize}" fill="${occluderColor}"/>` + taskFrameOutline() + '</svg>'));
 }
