@@ -2,10 +2,10 @@
 let jsPsych = initJsPsych({
     display_element: 'jspsych-target',
     on_finish: function() {
-        window.location.href = debriefURL;
         if (save_data_locally == "on"){
             jsPsych.data.get().localSave('csv','mydata.csv');
         }
+        window.location.href = debriefURL;
     },
     exclusions: {
         min_width: 920,
@@ -195,9 +195,7 @@ let fullscreen_on = {
     },
     delay_after: 500
 };
-if (jump_to_questionnaire != "on") {
-    timeline.push(fullscreen_on);
-}
+timeline.push(fullscreen_on);
 
 let frame_duration_exclusion = {
     type: jsPsychInstructions,
@@ -341,7 +339,9 @@ const real_trials = {
     timeline_variables: block1,
     randomize_order: false,
 };
-timeline.push(real_trials);
+if (jump_to_questionnaire !== 'on') {
+    timeline.push(real_trials);
+}
 
 
 // Visual demo: equal lengths and both directions of inequality.
@@ -367,9 +367,99 @@ let thank_you = {
     choices: [" "],
     on_start: function() {
         $("#progressContainer").hide();
+        document.documentElement.style.cursor = 'default';
     }
 };
 timeline.push(thank_you);
+
+// Closing questionnaires: keep text responses alongside any numeric scores.
+function saveQuestionnaire(data) {
+    data.responses = JSON.stringify(data.response);
+    if (save_data_locally !== 'on') saveData();
+}
+
+const projectorQuestion = {
+    css_classes: ['questionnaire-page'],
+    type: jsPsychSurveyMultiChoice,
+    preamble: 'Please tell us about your mental imagery experience.',
+    questions: [{
+        prompt: 'Was your imagery more like a projection on a screen or more like something inside your head?',
+        name: 'projector_type',
+        options: ['a projection on a screen', 'something inside my head', 'both', 'neither'],
+        required: true,
+    }],
+    data: {stage: 'imagery_experience'},
+    button_label: 'Continue',
+    on_finish: function(data) {
+        data.projector_type = data.response.projector_type;
+        saveQuestionnaire(data);
+    },
+};
+timeline.push(projectorQuestion);
+
+const study_questionnaire = {
+    css_classes: ['questionnaire-page'],
+    type: jsPsychSurveyText,
+    preamble: '<strong>Tell us more about your thoughts on the study.</strong>',
+    questions: [
+        {prompt: '1. Did you use any particular strategy when imagining the occluder or comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
+        {prompt: '2. How did you feel about the time provided for imagining the occluder and viewing the lines?', name: 'timing', rows: 3, columns: 90, required: true},
+        {prompt: '3. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
+        {prompt: '4. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
+    ],
+    data: {stage: 'study_questionnaire'},
+    on_finish: saveQuestionnaire,
+};
+timeline.push(study_questionnaire);
+
+const demographics = {
+    css_classes: ['questionnaire-page'],
+    type: jsPsychSurveyHtmlForm,
+    html: demographics_html,
+    button_label: 'Continue',
+    data: {stage: 'demographics'},
+    on_finish: saveQuestionnaire,
+};
+timeline.push(demographics);
+
+const finalQuestionsPage = {
+    css_classes: ['questionnaire-page'],
+    type: jsPsychSurveyMultiChoice,
+    preamble: 'Your answers to these questions will not affect your reward. Please answer honestly.',
+    questions: finalQuestions.map((prompt, index) => ({
+        prompt,
+        name: `final_q_${index + 1}`,
+        options: index === 0 ? finalOptions : percentageOptions,
+        required: true,
+    })),
+    data: {stage: 'final_questions'},
+    button_label: 'Continue',
+    on_finish: function(data) {
+        finalQuestions.forEach((_, index) => {
+            const options = index === 0 ? finalOptions : percentageOptions;
+            const name = `final_q_${index + 1}`;
+            data[name] = options.indexOf(data.response[name]) + 1;
+        });
+        saveQuestionnaire(data);
+    },
+};
+timeline.push(finalQuestionsPage);
+
+const bufferPage = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: buffer_text,
+    choices: ['Submit'],
+    data: {stage: 'submission'},
+    on_load: function() {
+        const button = document.querySelector('#jspsych-html-button-response-btngroup button');
+        button.disabled = true;
+        jsPsych.pluginAPI.setTimeout(() => { button.disabled = false; }, 3000);
+    },
+    on_finish: function() {
+        if (save_data_locally !== 'on') saveData();
+    },
+};
+timeline.push(bufferPage);
 
 // Function to save data after each trial
 function saveData(done) {

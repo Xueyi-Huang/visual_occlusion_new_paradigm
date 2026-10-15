@@ -35,7 +35,8 @@ const before_block_text_1 = `<div class="instructions left-aligned">
     <p><strong>${keySame}</strong> = same length; <strong>${keyDifferent}</strong> = different lengths. Then rate the vividness of your imagined occluder from 1 to 5.</p>
     <p>Keep your gaze at the center and respond as quickly and accurately as possible. Press Space to start the main task.</p>
 </div>`;
-const thank_you_text = '<p>Thank you for completing the experiment! Press the space bar to finish.</p>';
+const thank_you_text = '<p>Thank you for completing the task! A few brief questionnaires are all that remain.</p><p>Press Space to continue.</p>';
+const buffer_text = '<p>Thank you for participating! Click Submit to finish and continue to the debriefing page.</p>';
 
 // empty box gender
 const demographics_html = `

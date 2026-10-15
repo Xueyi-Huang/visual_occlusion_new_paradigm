@@ -1,7 +1,8 @@
 const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
-const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
-const skip_vviq = "on"; // Set to "on" to skip the VVIQ.
+const jump_to_questionnaire = "on"; // if "on", it will jump to the questionnaire
+const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
+
 
 const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 real trials.
 
@@ -118,3 +119,19 @@ const vviqOptions = [
 ];
 
 const vviqScores = [1, 2, 3, 4, 5];
+
+
+// Post-experiment imagery and engagement questions.
+const finalQuestions = [
+    "Independently of how you felt in this study, how would you describe your mental imagery in general?",
+    "In what percentage of main-task trials did you actively try to imagine the occluder?",
+    "In what percentage of main-task trials did you successfully form a mental image of the occluder in the instructed positions?",
+];
+const finalOptions = [
+    "I have no imagery at all.",
+    "Vague and dim.",
+    "Moderately clear and vivid.",
+    "Clear and reasonably vivid.",
+    "As vivid as normal vision.",
+];
+const percentageOptions = ["0%-20%", "20%-40%", "40%-60%", "60%-80%", "80%-100%"];

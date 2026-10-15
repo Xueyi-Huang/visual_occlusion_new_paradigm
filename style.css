@@ -212,3 +212,46 @@ select {
 .vviq-page .jspsych-survey-multi-choice-text.survey-multi-choice {
     text-align: left !important;
 }
+
+/* Long closing forms start below the viewport edge and scroll independently. */
+.jspsych-content.questionnaire-page {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    padding: 80px 24px 60px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    text-align: center;
+}
+
+.questionnaire-page #jspsych-survey-multi-choice-preamble,
+.questionnaire-page #jspsych-survey-text-preamble {
+    max-width: 800px;
+    margin: 0 auto 40px;
+    font-size: 16pt;
+    font-weight: bold;
+    line-height: 1.5;
+}
+
+.questionnaire-page #jspsych-survey-multi-choice-form,
+.questionnaire-page #jspsych-survey-text-form,
+.questionnaire-page #jspsych-survey-html-form {
+    max-width: 800px;
+    margin: 0 auto 40px;
+    text-align: left;
+}
+
+.questionnaire-page textarea {
+    display: block;
+    margin: 12px auto 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.questionnaire-page .jspsych-survey-text-question {
+    margin-left: 0;
+    margin-right: 0;
+}
