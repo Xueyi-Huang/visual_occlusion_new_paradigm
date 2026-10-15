@@ -1,13 +1,32 @@
 const wellcome_text = '<p>This experiment runs in fullscreen. Click Begin to continue.</p>';
 const block_text = 'This study requires a display running at 60 Hz or faster. Please refresh the page or use another display.';
 const good_frame_text = '<p>Display check complete. Click Next to read the instructions.</p>';
+const response_instructions = `
+    <p>Keep looking at the center of the box. Two vertical red lines will appear, one in each black square. Compare their visible lengths.</p>
+    <p>Wait until the question “Same or different length?” appears, then press <strong>${keySame}</strong> for the same length or <strong>${keyDifferent}</strong> for different lengths.</p>
+    <p>Respond as quickly and accurately as you can, within ${maxResponseTime / 1000} seconds of the question appearing. Do not guess before seeing the lines.</p>
+    <p>Green feedback means correct; red feedback means incorrect. Responses within ${minResponseTime} ms of the question trigger a warning, as do missed responses. Press Space to continue after a warning.</p>`;
+const imagery_instructions = `
+    <p>Before the lines appear, imagine an occluder in the middle of the grid, between the two black squares. The occluder is a mental image: it will not be drawn on the screen.</p>
+    <p>Form the image while the cue is shown and keep imagining it while you view the red lines. Judge only the lengths of the two visible red lines.</p>
+    <p>After your response and feedback, use the mouse to rate how vivid your imagined occluder was: 1 = not vivid at all, 5 = perfectly vivid. Rate your mental image, rather than your confidence in the line judgment.</p>`;
+const line_practice_pages = [
+    `<div class="instructions left-aligned"><h2>Practice 1: Compare the lines</h2>
+    <p>First, you will practice judging line lengths. There is no imagery task or vividness rating in this round.</p>
+    ${response_instructions}
+    <p>You will complete ${linePairs.length} practice trials. Click Next when you are ready.</p></div>`,
+];
+const imagery_practice_pages = [
+    `<div class="instructions left-aligned"><h2>Practice 2: Imagine and compare</h2>
+    <p>Now you will practice the full task.</p>${imagery_instructions}
+    <p>The response keys and feedback are the same as before. You will complete ${linePairs.length} practice trials. Click Next when you are ready.</p></div>`,
+];
 const before_block_text_1 = `<div class="instructions left-aligned">
-    <p>Keep your gaze at the center of the screen throughout each trial.</p>
-    <p>A gray 5×5 grid contains two black squares. The cue below the grid reads “Imagine middle / top / bottom”. This is a visual demo; imagery conditions will be configured later.</p>
-    <p>Next, two red lines will appear at the middle of the black squares for only ${linesDuration} ms. Compare the lengths of these two visible lines.</p>
-    <p>After the lines disappear, press <strong>${keySame}</strong> for the same length or <strong>${keyDifferent}</strong> for different lengths. Respond as quickly and accurately as possible, within ${maxResponseTime / 1000} seconds. If you miss the deadline, a “Too slow!” warning will appear; press the space bar to continue to the vividness rating.</p>
-    <p>Finally, rate the vividness of your mental image from 1 (not vivid at all) to 5 (perfectly vivid), using the mouse.</p>
-    <p>Press the space bar to start.</p>
+    <h2>Main task</h2>
+    <p>Practice is complete. Continue using the same sequence:</p>
+    <p>Look at the fixation cross, imagine an occluder in the middle of the grid, compare the visible red lines, and respond when the question appears.</p>
+    <p><strong>${keySame}</strong> = same length; <strong>${keyDifferent}</strong> = different lengths. Then rate the vividness of your imagined occluder from 1 to 5.</p>
+    <p>Keep your gaze at the center and respond as quickly and accurately as possible. Press Space to start the main task.</p>
 </div>`;
 const thank_you_text = '<p>Thank you for completing the experiment! Press the space bar to finish.</p>';
 

@@ -76,7 +76,7 @@ const imagery_stage = {
     css_classes: ['trial-frame'],
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
-    prompt: '<p>Imagine occluder</p>',
+    prompt: '<p>Imagine an occluder in the middle</p>',
     trial_duration: imageryDuration,
     data: {stage: 'imagery'},
 };
@@ -85,7 +85,7 @@ const lines_stage = {
     render_on_canvas: false,
     css_classes: ['trial-frame'],
     stimulus: jsPsych.timelineVariable('stimulus'),
-    prompt: '<p>lines stage</p>',
+    prompt: '<p>Compare the two red lines</p>',
     choices: "NO_KEYS",
     trial_duration: linesDuration,
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
@@ -103,7 +103,7 @@ const test_stage = {
         data.timed_out = data.response === null;
         data.too_fast = !data.timed_out && data.rt !== null && data.rt <= minResponseTime;
         data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
-        data.trial_num = real_trial_num++;
+        data.trial_num = data.isPractice === 'on' ? 0 : real_trial_num++;
         if (save_data_locally !== "on") saveData();
     },
 };
@@ -173,7 +173,9 @@ const rating_stage = {
         data.rating = Number(data.response) + 1;
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
         data.trial_num = judgment.trial_num;
-        $("#progressBar").css("width", (data.trial_num / trials.length) * 100 + "%");
+        if (data.isPractice !== "on") {
+            $("#progressBar").css("width", (data.trial_num / trials.length) * 100 + "%");
+        }
         if (save_data_locally !== "on") saveData();
     },
 };
@@ -225,7 +227,39 @@ let frame_duration_exclusion = {
 // }
 
 
-// Quick demo version: no practice instructions or extra blocks.
+// Practice round 1: line judgments only.
+const practice_round_1 = {
+    timeline: [fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
+    timeline_variables: linePairs.map(pair => generate_trial('on', pair, 0, 'practice_lines')),
+    randomize_order: true,
+    data: {isPractice: 'on', phase: 'practice_lines'},
+};
+if (jump_to_questionnaire !== 'on') {
+    timeline.push({
+        type: jsPsychInstructions,
+        pages: line_practice_pages,
+        show_clickable_nav: true,
+        data: {stage: 'instructions', phase: 'practice_lines'},
+    });
+    timeline.push(practice_round_1);
+}
+
+// Practice round 2: imagery, line judgments, and vividness ratings.
+const practice_round_2 = {
+    timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+    timeline_variables: linePairs.map(pair => generate_trial('on', pair, 0, 'practice_imagery')),
+    randomize_order: true,
+    data: {isPractice: 'on', phase: 'practice_imagery'},
+};
+if (jump_to_questionnaire !== 'on') {
+    timeline.push({
+        type: jsPsychInstructions,
+        pages: imagery_practice_pages,
+        show_clickable_nav: true,
+        data: {stage: 'instructions', phase: 'practice_imagery'},
+    });
+    timeline.push(practice_round_2);
+}
 
 // make real trials
 practice = "off";
@@ -258,24 +292,23 @@ if (jump_to_questionnaire != "on") {
     timeline.push(before_block_instruction_1);
 }
 
-let trial_structure = {
+// Real trials: the same sequence as practice round 2.
+const real_trials = {
     timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-};
-
-timeline.push({
-    timeline: [trial_structure],
     timeline_variables: block1,
-    randomize_order: false
-});
+    randomize_order: false,
+};
+timeline.push(real_trials);
 
 
 // Visual demo: equal lengths and both directions of inequality.
-function generate_trial(practice, lineLengths, blockNum) {
+function generate_trial(practice, lineLengths, blockNum, phase = 'main') {
     const isSame = lineLengths[0] === lineLengths[1];
     return {
         stimulus: gridStimulus(lineLengths),
         data: {
             isPractice: practice,
+            phase,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
             presentation_duration_ms: linesDuration,
