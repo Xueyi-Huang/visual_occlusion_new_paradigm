@@ -197,3 +197,18 @@ select {
 #jspsych-html-button-response-btngroup {
     margin-top: 20px;
 }
+
+/* VVIQ questionnaire layout from the reference study. */
+.vviq-page #jspsych-survey-multi-choice-preamble {
+    max-width: 850px;
+    font-size: 14pt;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 400px;
+    margin-left: 80px;
+    margin-bottom: 60px;
+}
+
+.vviq-page .jspsych-survey-multi-choice-text.survey-multi-choice {
+    text-align: left !important;
+}

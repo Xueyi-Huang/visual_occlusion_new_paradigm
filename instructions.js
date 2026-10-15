@@ -11,6 +11,13 @@ const imagery_instructions = `
     <p>Form the image while the cue is shown and keep imagining it while you view the red lines. Judge only the lengths of the two visible red lines.</p>
     <p>After your response and feedback, use the mouse to rate how vivid your imagined occluder was: 1 = not vivid at all, 5 = perfectly vivid. Rate your mental image, rather than your confidence in the line judgment.</p>`;
 const line_practice_pages = [
+    `<div class="instructions left-aligned">
+    <h2>Welcome to the experiment</h2>
+    <p>${skip_vviq === 'off' ? 'Thank you for completing the visual imagery questionnaire! Now we will move on to the experiment.' : 'Thank you for taking part! We will now begin the experiment.'}</p>
+    <p>There are two tasks in this study: judging whether two red lines have the same or different lengths, and imagining an occluder in the middle of the grid.</p>
+    <p>You will practice these step by step. First, you will practice comparing the lines. In the second practice round, you will combine the line judgments with imagining the occluder and rating its vividness.</p>
+    <p>Click Next to read the instructions for the first practice round.</p>
+    </div>`,
     `<div class="instructions left-aligned"><h2>Practice 1: Compare the lines</h2>
     <p>First, you will practice judging line lengths. There is no imagery task or vividness rating in this round.</p>
     ${response_instructions}
@@ -116,7 +123,7 @@ const demographics_html = `
     </fieldset>
     <br>
     `;
-    
+
 function toggleSpecifyInput() {
     var select = document.getElementById("d6_visDefi");
     var specifyContainer = document.getElementById("specifyContainer");
@@ -127,3 +134,37 @@ function toggleSpecifyInput() {
         document.getElementById("d6_specify").value = ""; // Clear the input when hidden
     }
 }
+
+function initial_instruction_pages() {
+    return [
+        "<div class='instructions left-aligned'>" +
+            "<p>While reading the instructions that follow, you can go back to " +
+            "previous pages using the \"Previous\" button below. " +
+            "<strong>Do not click the \"back\" button in your browser</strong> at any time " +
+            "during the experiment, including during the instructions, unless you no longer " +
+            "wish to participate in the experiment.</p>" +
+        "</div>",
+
+        "<div class='instructions left-aligned'>" +
+            "<p>Welcome! Thanks for helping us better understand how people's vision and imagination work. <p>" +
+            "<p>First, you will complete a questionnaire on visual mental imagery before heading to the experiment part.</p>" +
+        "</div>",
+
+        "<div class='instructions left-aligned'>" +
+            "<p><strong>Visual imagery refers to the ability to visualize, that is, the ability to form mental pictures, or to \"see in the mind's eye\".</strong> Marked individual differences are found in the strength and clarity of reported visual imagery and these differences are of considerable psychological interest.</p>" +
+
+            "<p><strong>The aim of this test is to determine the vividness of your visual imagery.</strong> The items of the test will possibly bring certain images to your mind. You are asked to rate the vividness of each image by reference to the five-point scale given below. For example, if your image is \"vague and dim\", then give it a rating of 2.</p><br>" +
+
+            "<p><strong>Rating Scale</strong></p>" +
+            "<p>1: No image at all, you only \"know\" that you are thinking of the object.<br>2: Vague and dim.<br>3: Moderately clear and vivid.<br>4: Clear and reasonably vivid.<br>5: Perfectly clear and as vivid as normal vision.</p>" +
+        "</div>",
+
+        "<div class='instructions left-aligned'>" +
+            "<p>Before you turn to the items, familiarize yourself with the different categories on the rating scale. Throughout the test, refer to the rating scale when judging the vividness of each image. <strong>Try to do each item separately, independent of how you may have done other items.</strong></p>" +
+
+            "<p>You won't be able to return to these instructions once you've started the questionnaire, so <strong>go back now if you want to reread anything</strong>.</p>" +
+
+            "<p>If you are ready, click \"Next\" to start.</p>" +
+        "</div>",
+    ];
+};

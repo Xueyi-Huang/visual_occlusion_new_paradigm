@@ -227,6 +227,42 @@ let frame_duration_exclusion = {
 // }
 
 
+// VVIQ: four scenes with four required ratings each.
+const vviqPages = vviqQuestions.map((questions, pageIndex) => ({
+    type: jsPsychSurveyMultiChoice,
+    css_classes: ['vviq-page'],
+    preamble: `<div class="vviq_preamble"><p>${vviqItems[pageIndex]}</p><p>Rate the vividness of each detail.</p></div>`,
+    questions: questions.map((prompt, itemIndex) => ({
+        prompt,
+        name: `vviq${pageIndex * 4 + itemIndex + 1}`,
+        options: vviqOptions,
+        required: true,
+    })),
+    data: {stage: 'vviq', vviq_page: pageIndex + 1},
+    button_label: 'Continue',
+    on_finish: function(data) {
+        questions.forEach((_, itemIndex) => {
+            const name = `vviq${pageIndex * 4 + itemIndex + 1}`;
+            data[name] = vviqScores[vviqOptions.indexOf(data.response[name])];
+        });
+        data.responses = JSON.stringify(data.response);
+        if (save_data_locally !== 'on') saveData();
+    },
+}));
+if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
+    timeline.push({
+        type: jsPsychInstructions,
+        pages: initial_instruction_pages(),
+        show_clickable_nav: true,
+        data: {stage: 'vviq_instructions'},
+        on_start: function() {
+            document.documentElement.style.cursor = 'default';
+            $('#progressContainer').hide();
+        },
+    });
+    timeline.push(...vviqPages);
+}
+
 // Practice round 1: line judgments only.
 const practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
     .map(pair => generate_trial('practice_lines', pair, 0));
