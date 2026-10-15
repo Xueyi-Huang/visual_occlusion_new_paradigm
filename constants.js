@@ -124,7 +124,7 @@ const vviqScores = [1, 2, 3, 4, 5];
 const finalQuestions = [
     "Independently of how you felt in this study, how would you describe your mental imagery in general?",
     "In what percentage did you actively try to imagine?",
-    "In what percentage did you successfully form a mental image of the occluder in the instructed positions?",
+    "In what percentage did you successfully form a mental image of the bar in the instructed positions?",
 ];
 const finalOptions = [
     "I have no imagery at all.",
@@ -135,7 +135,7 @@ const finalOptions = [
 ];
 const percentageOptions = ["0%-20%", "20%-40%", "40%-60%", "60%-80%", "80%-100%"];
 
-// Instruction illustration only; the occluder is never rendered during trials.
+// Instruction illustration only; the bar is never rendered during trials.
 function occluderIllustration(position = 'middle') {
     let markup = decodeURIComponent(gridStimulus().split(',')[1]);
     const cell = gridCellSize;

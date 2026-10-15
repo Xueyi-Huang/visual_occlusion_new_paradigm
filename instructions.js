@@ -1,49 +1,67 @@
 const wellcome_text = '<p>This experiment runs in fullscreen. Click Begin to continue.</p>';
 const block_text = 'This study requires a display running at 60 Hz or faster. Please refresh the page or use another display.';
 const good_frame_text = '<p>Display check complete. Click Next to read the instructions.</p>';
-let response_instructions, imagery_instructions, line_practice_pages, imagery_practice_pages, full_practice_pages;
+let response_instructions, rating_instructions, imagery_instructions, line_practice_pages, imagery_practice_pages, full_practice_pages;
 
 // Build color-dependent text after participant assignment in experiment.js.
+function instructionImage(source, description) {
+    return `<img src="${source}" alt="${description}" style="width:300px;max-width:100%;height:auto;display:block;margin:16px auto;">`;
+}
+
+function instructionPage(content) {
+    return `<div class="instructions left-aligned">${content}</div>`;
+}
+
+function practiceStartText() {
+    return `<p>Let's do a few practice trials before we continue.</p>
+        <p>Please place two fingers from your left hand on <strong>${keySame}</strong> and <strong>${keyDifferent}</strong>, and use your left thumb to press Space when a warning asks you to continue. Keep your right hand on your mouse or trackpad.</p>
+        <p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p>
+        <p>If you are ready, click Next to start practice.</p>`;
+}
+
+function fixationInstruction() {
+    return instructionPage(`<p>At the beginning of each trial, a cross will appear in the center of the screen. Please <strong>keep your gaze at the center throughout the trial</strong>.</p>
+        <div class="task-panel fixation-text" style="width:240px;height:240px;margin:16px auto;">+</div>`);
+}
+
 function initializeTaskInstructions() {
-    response_instructions = `
-        <p>Keep looking at the center of the box. Two vertical red lines will appear, one in each ${squareColor} square. Compare their visible lengths.</p>
-        <p>Wait until the question “Same or different length?” appears, then press <strong>${keySame}</strong> for the same length or <strong>${keyDifferent}</strong> for different lengths.</p>
-        <p>Respond as quickly and accurately as you can, within ${maxResponseTime / 1000} seconds of the question appearing. Do not guess before seeing the lines.</p>
-        <p>Green feedback means correct; red feedback means incorrect. Responses within ${minResponseTime} ms of the question trigger a warning, as do missed responses. Press Space to continue after a warning.</p>`;
-    imagery_instructions = `
-        <p>${imageryDescription(firstBlockCondition)} The bar is a mental image: it will not be drawn on the screen.</p>
-        <p>Form the image while the cue is shown and keep imagining it while you view the red lines. Judge only the lengths of the two visible red lines.</p>
-        <p>After your response and feedback, use the mouse to rate how vivid your imagined occluder was: 1 = not vivid at all, 5 = perfectly vivid. Rate your mental image, rather than your confidence in the line judgment.</p>`;
+    const practiceCount = review_mode === 'on' ? '1 trial' : `${linePairs.length} trials`;
+    response_instructions = `<p>Your task is to determine <strong>whether the two red lines have the same or different lengths</strong>.</p>
+        <p>After the lines disappear and the question appears, press <strong>${keySame}</strong> if they are the same length, or <strong>${keyDifferent}</strong> if they are different lengths.</p>`;
+    rating_instructions = `<p>Then, you will be asked to rate how vivid your mental image was during that trial. Use your mouse or trackpad to click the button with your rating.</p>
+        <p><strong>1 = Not vivid at all<br>2 = Slightly vivid<br>3 = Moderately vivid<br>4 = Very vivid<br>5 = Perfectly vivid</strong></p>
+        <p>Rate each trial <strong>based on your experience during that specific one</strong>, independently of your same/different answer or how you've rated other trials. Choose 1 if you could not form an image, and 5 if it was as vivid as actually seeing the bar.</p>`;
+    imagery_instructions = `<p>Your task is to <strong>imagine the ${occluderColor} bar as vividly as you can</strong>.</p>
+        <p>${imageryDescription(firstBlockCondition)}</p>
+        <p>The picture below illustrates what you should imagine. The bar itself will not appear during the trials. Please keep the two ${squareColor} squares in their original positions.</p>
+        ${instructionImage(occluderIllustration(practiceImageryPosition), imageryDescription(firstBlockCondition))}`;
     line_practice_pages = [
-        `<div class="instructions left-aligned">
-        <h2>Welcome to the experiment</h2>
-        <p>${skip_vviq === 'off' ? 'Thank you for completing the visual imagery questionnaire! Now we will move on to the experiment.' : 'Thank you for taking part! We will now begin the experiment.'}</p>
-        <p>There are two tasks in this study: judging whether two red lines have the same or different lengths, and imagining a bar in the instructed position. The main task has three blocks with different bar positions.</p>
-        <p>You will practice these step by step. First, you will practice comparing the lines. In the second round, you will practice imagining the occluder and rating its vividness. In the third round, you will combine imagery, line judgments, and vividness ratings.</p>
-        <p>Click Next to read the instructions for the first practice round.</p>
-        </div>`,
-        `<div class="instructions left-aligned"><h2>Practice 1: Compare the lines</h2>
-        <p>First, you will practice judging line lengths. There is no imagery task or vividness rating in this round. The lines remain visible for ${linesDurationPractice / 1000} seconds to help you learn the task. You have ${maxResponseTimePractice / 1000} seconds to respond after the question appears.</p>
-        ${response_instructions}
-        <p>You will complete ${review_mode === 'on' ? '1 practice trial' : `${linePairs.length} practice trials`}. Click Next when you are ready.</p></div>`,
+        instructionPage(`<p>${skip_vviq === 'off' ? 'Thanks for the help. And welcome to the experiment part!' : 'Welcome! Thanks for helping us better understand how vision and imagination work.'}</p>
+            <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths as quickly and accurately as you can</strong>.</p>`),
+        fixationInstruction(),
+        instructionPage(`${response_instructions}<p>In this example, the lines are the same length. You'd press <strong>${keySame}</strong>.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Two equally short red lines')}`),
+        instructionPage(`<p>This is another example of a same response. You'd press <strong>${keySame}</strong>.</p>${instructionImage(gridStimulus([longLine, longLine]), 'Two equally long red lines')}`),
+        instructionPage(`<p>The two lines in this example have different lengths. You'd press <strong>${keyDifferent}</strong>.</p>${instructionImage(gridStimulus([shortLine, longLine]), 'Short left line and long right line')}`),
+        instructionPage(`<p>This is another example of a different response. You'd press <strong>${keyDifferent}</strong>.</p>${instructionImage(gridStimulus([longLine, shortLine]), 'Long left line and short right line')}`),
+        instructionPage(`<p>The lines will appear for ${linesDurationPractice / 1000} seconds in this practice. Wait for the question, then answer within ${maxResponseTimePractice / 1000} seconds.</p>
+            <p>Green feedback means correct; red means incorrect. If you answer too early or miss the deadline, a warning will ask you to press Space.</p><p>You will complete ${practiceCount}.</p>${practiceStartText()}`),
     ];
     imagery_practice_pages = [
-        `<div class="instructions left-aligned"><h2>The imagined occluder</h2>
-        <img src="${occluderIllustration(practiceImageryPosition)}" alt="${imageryDescription(firstBlockCondition)}" style="display:block;width:300px;max-width:100%;margin:16px auto;">
-        <p>This illustration shows the ${occluderColor} occluder you should imagine with the ${squareColor} squares. During the trials, this rectangle will not be displayed: create it in your mind.</p></div>`,
-        `<div class="instructions left-aligned"><h2>Practice 2: Imagine and rate</h2>
-        <p>${imageryDescription(firstBlockCondition)}</p>
-        <p>Form the mental image during the ${imageryDurationPractice / 1000}-second imagery cue. Then use the mouse to rate its vividness: 1 = not vivid at all, 5 = perfectly vivid. Rate your actual experience; there are no correct or incorrect ratings.</p>
-        <p>No red lines or same/different questions appear in this round. This imagery condition matches your first main-task block.</p>
-        <p>You will complete ${review_mode === 'on' ? '1 practice trial' : `${linePairs.length} practice trials`}. Click Next when ready.</p></div>`,
+        instructionPage(`<p>Well done!</p><p>Next, you will practice <strong>imagining a bar as vividly as you can</strong> and rating your mental image.</p>`),
+        fixationInstruction(),
+        instructionPage(imagery_instructions),
+        instructionPage(`<p>Please imagine the bar <strong>with your eyes open</strong>, and keep it in your mind as vividly as possible <strong>until the rating screen appears</strong>.</p><p>You will have ${imageryDurationPractice / 1000} seconds to do this. The two ${squareColor} squares stay on screen; only the bar is imagined.</p>`),
+        instructionPage(rating_instructions),
+        instructionPage(`<p>Let's practice imagining and rating the bar. There are <strong>no line judgments</strong> in this round.</p><p>Please really try your best to imagine the bar as vividly as possible on each trial.</p><p>You will complete ${practiceCount}. Go back now if you want to reread anything. If you are ready, click Next to start practice.</p>`),
     ];
     full_practice_pages = [
-        `<div class="instructions left-aligned"><h2>Practice 3: The full task</h2>
-        <p>Now combine the two tasks, using the same bar position as the previous round and your first main-task block.</p>${imagery_instructions}
-        <p>You have ${imageryDurationPractice / 1000} seconds to form the image. Keep imagining it while the red lines appear for ${linesDuration / 1000} seconds. When the question appears, press ${keySame} for same or ${keyDifferent} for different within ${maxResponseTime / 1000} seconds. After feedback, rate your imagery vividness.</p>
-        <p>You will complete ${review_mode === 'on' ? '1 practice trial' : `${linePairs.length} practice trials`}. Click Next when ready.</p></div>`,
+        instructionPage(`<p>Well done!</p><p>Now, let's combine the imagination task with the same/different task. Click Next to read the complete procedure.</p>`),
+        fixationInstruction(),
+        instructionPage(imagery_instructions),
+        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible while the two red lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}<p>Answer within ${maxResponseTime / 1000} seconds of the question appearing.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
+        instructionPage(rating_instructions),
+        instructionPage(`<p>Please really try your best to imagine the bar and keep it in mind while viewing the lines. We also need you to respond <strong>as quickly and accurately as possible</strong> once the question appears.</p><p>You will complete ${practiceCount}.</p>${practiceStartText()}`),
     ];
-
 }
 
 const thank_you_text = '<p>Thank you for completing the task! A few brief questionnaires are all that remain.</p><p>Press Space to continue.</p>';
@@ -184,23 +202,28 @@ function initial_instruction_pages() {
 // Block-specific imagery instructions and examples.
 function imageryDescription(blockNumber) {
     const descriptions = {
-        1: `Imagine a vertical ${occluderColor} bar over the middle three cells of the center column, between the two ${squareColor} squares.`,
-        2: `Imagine a horizontal ${occluderColor} bar covering three cells across the row immediately above the two ${squareColor} squares. Use this TOP position on every trial.`,
-        3: `Imagine a horizontal ${occluderColor} bar spanning the entire middle row, behind the two ${squareColor} squares. The squares are in front of the bar and hide those parts of it.`,
+        1: `Picture a ${occluderColor} bar standing upright between the two ${squareColor} squares. It covers the middle three grid squares.`,
+        2: `Picture a ${occluderColor} bar lying across the top of the two ${squareColor} squares. It covers three grid squares just above them.`,
+        3: `Picture a ${occluderColor} bar lying across the whole middle row, behind the two ${squareColor} squares. The squares hide the parts of the bar behind them.`,
     };
     return descriptions[blockNumber];
 }
 
 function blockInstructionPages(blockNumber, blockPosition = blockNumber) {
-    const positions = blockNumber === 2 ? ['top'] : [blockNumber === 1 ? 'middle' : 'behind'];
-    return [`<div class="instructions left-aligned">
-        <h2>Block ${blockPosition} of 3</h2>
-        <p>This block contains ${review_mode === 'on' ? 2 : linePairs.length * repeatTimes} trials.</p>
-        <p>${blockPosition > 1 ? 'You may take a break here. The imagined bar changes in the next block.' : 'Practice is complete. You will now complete three blocks with different imagined bar positions.'}</p>
-        <p>${imageryDescription(blockNumber)}</p>
-        <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">${positions.map(position => `<figure style="margin:0;text-align:center;"><img src="${occluderIllustration(position)}" alt="Imagined bar: ${position}" style="width:240px;max-width:100%;"><figcaption>${position.toUpperCase()}</figcaption></figure>`).join('')}</div>
-        <p>These bars are illustrations only. During the trials, imagine the bar yourself and keep it in mind while comparing the two visible red lines.</p>
-        <p>Respond when the question appears: ${keySame} = same length, ${keyDifferent} = different lengths. Then rate the vividness of the imagined bar.</p>
-        <p>${blockPosition > 1 ? `First, complete ${review_mode === 'on' ? '1 full-task practice trial' : `${linePairs.length} full-task practice trials`} with this bar position. Click Next to start practice.` : 'Click Next when you are ready to begin this block.'}</p>
-    </div>`];
+    const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
+    return [
+        instructionPage(`<p>Welcome to block ${blockPosition}!</p>
+            <p>In this block, you'll continue with the <strong>same/different task combined with the imagination task</strong>. Click Next to see what you should imagine.</p>`),
+        instructionPage(`<p>After the cross, the grid and two ${squareColor} squares will appear. Your task is to <strong>imagine the ${occluderColor} bar as vividly as you can</strong>.</p>
+            <p>${imageryDescription(blockNumber)}</p>
+            <p>The picture below illustrates what you should imagine. The bar itself will not appear during the trials. Please keep the two ${squareColor} squares in their original positions.</p>
+            ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}`),
+        instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it as vividly as possible while the two red lines appear.</p>
+            ${response_instructions}<p>Answer within ${maxResponseTime / 1000} seconds of the question appearing.</p>
+            ${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
+        instructionPage(rating_instructions),
+        instructionPage(`<p>Please really try your best to imagine the bar and keep it in mind while viewing the lines. Respond <strong>as quickly and accurately as possible</strong> once the question appears.</p>
+            <p>This block has ${review_mode === 'on' ? 2 : linePairs.length * repeatTimes} main trials. You can take a short break here.</p>
+            ${blockPosition > 1 ? `<p>Let's first do ${review_mode === 'on' ? '1 practice trial' : `${linePairs.length} practice trials`} with this bar position.</p>${practiceStartText()}` : '<p>Go back now if you want to reread anything. If you are ready, click Next to start the main trials.</p>'}`),
+    ];
 }

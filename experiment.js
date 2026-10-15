@@ -468,8 +468,8 @@ const study_questionnaire = {
     type: jsPsychSurveyText,
     preamble: '<strong>Tell us more about your thoughts on the study.</strong>',
     questions: [
-        {prompt: '1. Did you use any particular strategy when imagining the occluder or comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
-        {prompt: '2. How did you feel about the time provided for imagining the occluder and viewing the lines?', name: 'timing', rows: 3, columns: 90, required: true},
+        {prompt: '1. Did you use any particular strategy when imagining the bar or comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
+        {prompt: '2. How did you feel about the time provided for imagining the bar and viewing the lines?', name: 'timing', rows: 3, columns: 90, required: true},
         {prompt: '3. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
         {prompt: '4. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
     ],
