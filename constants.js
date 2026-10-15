@@ -1,21 +1,20 @@
 const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
-const jump_to_questionnaire = "on"; // if "on", it will jump to the questionnaire
-const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
-
+const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
+const skip_vviq = "on"; // Set to "on" to skip the VVIQ.
 
 const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 real trials.
 
 const itiDuration = 500;
 const fixationDuration = 500;
-const linesDuration = 2500;
+const linesDuration = 250;
 const imageryDuration = 4000;
 const feedbackDuration = 1000;
 const maxResponseTime = 2000;
 const minResponseTime = 200;
 
-const imageDurationPractice = 1500;
-const maxResponseTimePractice = 2000;
+const linesDurationPractice = 500; // Longer line viewing in practice round 1.
+const maxResponseTimePractice = 4000;
 const imageryDurationPractice = 4000;
 
 const currentURL = window.location.href;
@@ -124,8 +123,8 @@ const vviqScores = [1, 2, 3, 4, 5];
 // Post-experiment imagery and engagement questions.
 const finalQuestions = [
     "Independently of how you felt in this study, how would you describe your mental imagery in general?",
-    "In what percentage of main-task trials did you actively try to imagine the occluder?",
-    "In what percentage of main-task trials did you successfully form a mental image of the occluder in the instructed positions?",
+    "In what percentage did you actively try to imagine?",
+    "In what percentage did you successfully form a mental image of the occluder in the instructed positions?",
 ];
 const finalOptions = [
     "I have no imagery at all.",
@@ -135,3 +134,10 @@ const finalOptions = [
     "As vivid as normal vision.",
 ];
 const percentageOptions = ["0%-20%", "20%-40%", "40%-60%", "60%-80%", "80%-100%"];
+
+// Instruction illustration only; the occluder is never rendered during trials.
+function occluderIllustration() {
+    const markup = decodeURIComponent(gridStimulus().split(',')[1]);
+    return svgDataUrl(markup.replace('</svg>',
+        `<rect x="${2 * gridCellSize}" y="${taskFrameBorderWidth}" width="${gridCellSize}" height="${taskFrameSize - 2 * taskFrameBorderWidth}" fill="#777"/>` + taskFrameOutline() + '</svg>'));
+}

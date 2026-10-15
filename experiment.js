@@ -77,7 +77,7 @@ const imagery_stage = {
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
     prompt: '<p>Imagine an occluder in the middle</p>',
-    trial_duration: imageryDuration,
+    trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
     data: {stage: 'imagery'},
 };
 const lines_stage = {
@@ -87,7 +87,7 @@ const lines_stage = {
     stimulus: jsPsych.timelineVariable('stimulus'),
     prompt: '<p>Compare the two red lines</p>',
     choices: "NO_KEYS",
-    trial_duration: linesDuration,
+    trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
 };
 const test_stage = {
@@ -96,7 +96,7 @@ const test_stage = {
     stimulus: '<div class="task-panel">Same or different length?</div>',
     choices: [keySame, keyDifferent],
     prompt: '<p>S = Same, D = Different</p>',
-    trial_duration: maxResponseTime,
+    trial_duration: () => jsPsych.timelineVariable('response_duration'),
     response_ends_trial: true,
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
     on_finish: function(data) {
@@ -343,17 +343,23 @@ if (jump_to_questionnaire !== 'on') {
     timeline.push(real_trials);
 }
 
-
-// Visual demo: equal lengths and both directions of inequality.
 function generate_trial(practice, lineLengths, blockNum) {
     const isSame = lineLengths[0] === lineLengths[1];
+    const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
+    const responseDuration = practice === 'practice_lines' ? maxResponseTimePractice : maxResponseTime;
+    const imaginationDuration = practice === 'practice_imagery' ? imageryDurationPractice : imageryDuration;
     return {
+        presentation_duration: presentationDuration,
+        response_duration: responseDuration,
+        imagery_duration: imaginationDuration,
         stimulus: gridStimulus(lineLengths),
         data: {
             isPractice: practice,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
-            presentation_duration_ms: linesDuration,
+            presentation_duration_ms: presentationDuration,
+            response_duration_ms: responseDuration,
+            imagery_duration_ms: practice === 'practice_lines' ? 0 : imaginationDuration,
             correct_response: isSame ? keySame : keyDifferent,
             correct_answer: isSame ? 'same' : 'different',
             trial_condition: blockNum,
