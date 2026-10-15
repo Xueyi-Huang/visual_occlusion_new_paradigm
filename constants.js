@@ -3,7 +3,7 @@ const save_data_locally = "on"; // if "on", the data will be saved locally after
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
 const skip_vviq = "on"; // Set to "on" to skip the VVIQ.
 
-const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 real trials.
+const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per block, 192 total.
 
 const itiDuration = 500;
 const fixationDuration = 500;
@@ -136,8 +136,22 @@ const finalOptions = [
 const percentageOptions = ["0%-20%", "20%-40%", "40%-60%", "60%-80%", "80%-100%"];
 
 // Instruction illustration only; the occluder is never rendered during trials.
-function occluderIllustration() {
-    const markup = decodeURIComponent(gridStimulus().split(',')[1]);
-    return svgDataUrl(markup.replace('</svg>',
-        `<rect x="${2 * gridCellSize}" y="${gridCellSize}" width="${gridCellSize}" height="${3 * gridCellSize}" fill="${occluderColor}"/>` + taskFrameOutline() + '</svg>'));
+function occluderIllustration(position = 'middle') {
+    let markup = decodeURIComponent(gridStimulus().split(',')[1]);
+    const cell = gridCellSize;
+    const geometry = {
+        middle: [2 * cell, cell, cell, 3 * cell],
+        top: [cell, cell, 3 * cell, cell],
+        bottom: [cell, 3 * cell, 3 * cell, cell],
+        behind: [0, 2 * cell, 5 * cell, cell],
+    }[position];
+    const [x, y, width, height] = geometry;
+    let bar = `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${occluderColor}"/>`;
+    if (position === 'behind') {
+        // Redraw the squares in front of the imagined bar.
+        for (const column of [1, 3]) {
+            bar += `<rect x="${column * cell}" y="${2 * cell}" width="${cell}" height="${cell}" fill="${squareColor}"/>`;
+        }
+    }
+    return svgDataUrl(markup.replace('</svg>', bar + taskFrameOutline() + '</svg>'));
 }

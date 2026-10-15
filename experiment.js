@@ -50,12 +50,11 @@ let trials = [];
 let block1 = [];
 let block2 = [];
 let block3 = [];
-let block4 = [];
 let real_trial_num = 1;
 let timeline = [];
 let practice;
 let blockNum;
-const maxBlockNum = 1;
+const maxBlockNum = 3;
 
 // /* preload images */
 let preloadImages = {
@@ -79,9 +78,9 @@ const imagery_stage = {
     css_classes: ['trial-frame'],
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
-    prompt: `<p>Imagine a ${occluderColor} occluder in the middle</p>`,
+    prompt: () => `<p>${jsPsych.timelineVariable('imagery_cue')}</p>`,
     trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
-    data: {stage: 'imagery'},
+    data: () => ({...jsPsych.timelineVariable('data'), stage: 'imagery'}),
 };
 const lines_stage = {
     type: jsPsychImageKeyboardResponse,
@@ -302,56 +301,60 @@ if (jump_to_questionnaire !== 'on') {
     timeline.push(practice_round_2);
 }
 
-// make real trials
-practice = "off";
-for (blockNum = 1; blockNum <= maxBlockNum; blockNum++){
-    for (let r = 0; r < repeatTimes; r++){
+// Generate each block separately so trial order never mixes imagery conditions.
+practice = 'off';
+const blocks = [];
+for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
+    const blockTrials = [];
+    for (let repetition = 0; repetition < repeatTimes; repetition++) {
         for (const lineLengths of linePairs) {
-            let trial = generate_trial(practice, lineLengths, blockNum);
-            trials.push(trial);
+            const position = blockNum === 1 ? 'middle'
+                : blockNum === 2 ? 'top' : 'behind';
+            blockTrials.push(generate_trial(practice, lineLengths, blockNum, position));
         }
     }
+    shuffle(blockTrials);
+    if (review_mode === 'on') {
+        blockTrials.splice(2);
+    }
+    blocks.push(blockTrials);
 }
-const shuffleTrials = shuffle(trials);
-if (review_mode === 'on') {
-    trials.splice(2); // Keep the progress total consistent with the shortened main task.
-}
-block1 = shuffleTrials;
-block2 = [];
-block3 = [];
-block4 = [];
+[block1, block2, block3] = blocks;
+trials = blocks.flat();
 
-
-// start block 1
-let before_block_instruction_1 = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: before_block_text_1,
-    choices: [" "],
-    post_trial_gap: 2000,
-    on_finish: function() {
-        $("#progressContainer").show();
-    },
-};
-if (jump_to_questionnaire != "on") {
-    timeline.push(before_block_instruction_1);
-}
-
-// Real trials: the same sequence as practice round 2.
-const real_trials = {
-    timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-    timeline_variables: block1,
-    randomize_order: false,
-};
-if (jump_to_questionnaire !== 'on') {
-    timeline.push(real_trials);
+// Real trials: identical response sequence, with block-specific imagery cues.
+for (let index = 0; index < blocks.length; index++) {
+    if (jump_to_questionnaire !== 'on') {
+        timeline.push({
+            type: jsPsychInstructions,
+            pages: blockInstructionPages(index + 1),
+            show_clickable_nav: true,
+            data: {stage: 'block_instructions', block_num: index + 1},
+            on_start: function() { $('#progressContainer').hide(); },
+            on_finish: function() { $('#progressContainer').show(); },
+        });
+        timeline.push({
+            timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+            timeline_variables: blocks[index],
+            randomize_order: false,
+            data: {isPractice: 'off', block_num: index + 1},
+        });
+    }
 }
 
-function generate_trial(practice, lineLengths, blockNum) {
+function generate_trial(practice, lineLengths, blockNum, position = 'middle') {
     const isSame = lineLengths[0] === lineLengths[1];
     const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
     const responseDuration = practice === 'practice_lines' ? maxResponseTimePractice : maxResponseTime;
     const imaginationDuration = practice === 'practice_imagery' ? imageryDurationPractice : imageryDuration;
+    const imageryCues = {
+        middle: `Imagine a ${occluderColor} vertical bar in the MIDDLE`,
+        top: `Imagine a ${occluderColor} horizontal bar at the TOP`,
+        bottom: `Imagine a ${occluderColor} horizontal bar at the BOTTOM`,
+        behind: `Imagine a ${occluderColor} horizontal bar BEHIND the squares`,
+    };
     return {
+        imagery_cue: imageryCues[position],
         presentation_duration: presentationDuration,
         response_duration: responseDuration,
         imagery_duration: imaginationDuration,
@@ -366,6 +369,8 @@ function generate_trial(practice, lineLengths, blockNum) {
             correct_response: isSame ? keySame : keyDifferent,
             correct_answer: isSame ? 'same' : 'different',
             trial_condition: blockNum,
+            block_num: blockNum,
+            imagery_position: practice === 'practice_lines' ? 'none' : position,
         },
     };
 }
