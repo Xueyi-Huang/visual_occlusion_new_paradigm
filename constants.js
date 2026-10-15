@@ -2,15 +2,11 @@ const review_mode = "off"; // if "on", the number of trials will be reduced for 
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire 
 
-// Placeholder cue; imagery conditions can be assigned later.
-const imageryPositions = ['middle / top / bottom'];
-const primeNum = imageryPositions.length;
-const testNum = 4;
 const repeatTimes = 1;
 
 const itiDuration = 500;
 const fixationDuration = 500;
-const linesDuration = 250;
+const linesDuration = 2500;
 const imageryDuration = 4000;
 const feedbackDuration = 1000;
 const maxResponseTime = 2000;
@@ -46,8 +42,14 @@ function taskFrameOutline() {
     const extent = taskFrameSize - taskFrameBorderWidth;
     return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
 }
-const sameLineLength = 32;
-const differentLineLength = 48;
+const shortLine = 32;
+const longLine = 48;
+const linePairs = [
+    [shortLine, shortLine],
+    [longLine, longLine],
+    [shortLine, longLine],
+    [longLine, shortLine],
+];
 const lineWidth = 3;
 
 function gridStimulus(lineLengths = null) {

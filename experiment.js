@@ -57,7 +57,7 @@ const maxBlockNum = 1;
 // /* preload images */
 let preloadImages = {
     type: jsPsychPreload,
-    images: [gridStimulus(), ...Array.from({length: 4}, (_, i) => generate_trial('off', 1, i + 1, 1).stimulus)],
+    images: [gridStimulus(), ...linePairs.map(lineLengths => gridStimulus(lineLengths))],
 };
 timeline.push(preloadImages);
 
@@ -231,11 +231,9 @@ let frame_duration_exclusion = {
 practice = "off";
 for (blockNum = 1; blockNum <= maxBlockNum; blockNum++){
     for (let r = 0; r < repeatTimes; r++){
-        for (let i = 1; i <= primeNum; i++) {
-            for (let j = 1; j <= testNum; j++) {
-                let trial = generate_trial(practice, i, j, blockNum);
-                trials.push(trial);
-            }
+        for (const lineLengths of linePairs) {
+            let trial = generate_trial(practice, lineLengths, blockNum);
+            trials.push(trial);
         }
     }
 }
@@ -272,27 +270,17 @@ timeline.push({
 
 
 // Visual demo: equal lengths and both directions of inequality.
-function generate_trial(practice, primeIndex, testIndex, blockNum) {
-    const imagery_position = imageryPositions[primeIndex - 1];
-    const lineLengths = [
-        [sameLineLength, sameLineLength],
-        [differentLineLength, differentLineLength],
-        [sameLineLength, differentLineLength],
-        [differentLineLength, sameLineLength],
-    ][testIndex - 1];
+function generate_trial(practice, lineLengths, blockNum) {
     const isSame = lineLengths[0] === lineLengths[1];
     return {
-        imagery_position,
         stimulus: gridStimulus(lineLengths),
         data: {
             isPractice: practice,
-            imagery_position,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
             presentation_duration_ms: linesDuration,
             correct_response: isSame ? keySame : keyDifferent,
             correct_answer: isSame ? 'same' : 'different',
-            test_type: testIndex,
             trial_condition: blockNum,
         },
     };
