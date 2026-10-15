@@ -103,7 +103,7 @@ const test_stage = {
         data.timed_out = data.response === null;
         data.too_fast = !data.timed_out && data.rt !== null && data.rt <= minResponseTime;
         data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
-        data.trial_num = data.isPractice === 'on' ? 0 : real_trial_num++;
+        data.trial_num = data.isPractice === 'off' ? real_trial_num++ : 0;
         if (save_data_locally !== "on") saveData();
     },
 };
@@ -173,7 +173,7 @@ const rating_stage = {
         data.rating = Number(data.response) + 1;
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
         data.trial_num = judgment.trial_num;
-        if (data.isPractice !== "on") {
+        if (data.isPractice === "off") {
             $("#progressBar").css("width", (data.trial_num / trials.length) * 100 + "%");
         }
         if (save_data_locally !== "on") saveData();
@@ -228,35 +228,39 @@ let frame_duration_exclusion = {
 
 
 // Practice round 1: line judgments only.
+const practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+    .map(pair => generate_trial('practice_lines', pair, 0));
 const practice_round_1 = {
     timeline: [fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
-    timeline_variables: linePairs.map(pair => generate_trial('on', pair, 0, 'practice_lines')),
+    timeline_variables: practice_trials_1,
     randomize_order: true,
-    data: {isPractice: 'on', phase: 'practice_lines'},
+    data: {isPractice: 'practice_lines'},
 };
 if (jump_to_questionnaire !== 'on') {
     timeline.push({
         type: jsPsychInstructions,
         pages: line_practice_pages,
         show_clickable_nav: true,
-        data: {stage: 'instructions', phase: 'practice_lines'},
+        data: {stage: 'instructions', isPractice: 'practice_lines'},
     });
     timeline.push(practice_round_1);
 }
 
 // Practice round 2: imagery, line judgments, and vividness ratings.
+const practice_trials_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+    .map(pair => generate_trial('practice_imagery', pair, 0));
 const practice_round_2 = {
     timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-    timeline_variables: linePairs.map(pair => generate_trial('on', pair, 0, 'practice_imagery')),
+    timeline_variables: practice_trials_2,
     randomize_order: true,
-    data: {isPractice: 'on', phase: 'practice_imagery'},
+    data: {isPractice: 'practice_imagery'},
 };
 if (jump_to_questionnaire !== 'on') {
     timeline.push({
         type: jsPsychInstructions,
         pages: imagery_practice_pages,
         show_clickable_nav: true,
-        data: {stage: 'instructions', phase: 'practice_imagery'},
+        data: {stage: 'instructions', isPractice: 'practice_imagery'},
     });
     timeline.push(practice_round_2);
 }
@@ -272,6 +276,9 @@ for (blockNum = 1; blockNum <= maxBlockNum; blockNum++){
     }
 }
 const shuffleTrials = shuffle(trials);
+if (review_mode === 'on') {
+    trials.splice(2); // Keep the progress total consistent with the shortened main task.
+}
 block1 = shuffleTrials;
 block2 = [];
 block3 = [];
@@ -302,13 +309,12 @@ timeline.push(real_trials);
 
 
 // Visual demo: equal lengths and both directions of inequality.
-function generate_trial(practice, lineLengths, blockNum, phase = 'main') {
+function generate_trial(practice, lineLengths, blockNum) {
     const isSame = lineLengths[0] === lineLengths[1];
     return {
         stimulus: gridStimulus(lineLengths),
         data: {
             isPractice: practice,
-            phase,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
             presentation_duration_ms: linesDuration,

@@ -14,12 +14,12 @@ const line_practice_pages = [
     `<div class="instructions left-aligned"><h2>Practice 1: Compare the lines</h2>
     <p>First, you will practice judging line lengths. There is no imagery task or vividness rating in this round.</p>
     ${response_instructions}
-    <p>You will complete ${linePairs.length} practice trials. Click Next when you are ready.</p></div>`,
+    <p>You will complete ${review_mode === 'on' ? '1 practice trial' : `${linePairs.length} practice trials`}. Click Next when you are ready.</p></div>`,
 ];
 const imagery_practice_pages = [
     `<div class="instructions left-aligned"><h2>Practice 2: Imagine and compare</h2>
     <p>Now you will practice the full task.</p>${imagery_instructions}
-    <p>The response keys and feedback are the same as before. You will complete ${linePairs.length} practice trials. Click Next when you are ready.</p></div>`,
+    <p>The response keys and feedback are the same as before. You will complete ${review_mode === 'on' ? '1 practice trial' : `${linePairs.length} practice trials`}. Click Next when you are ready.</p></div>`,
 ];
 const before_block_text_1 = `<div class="instructions left-aligned">
     <h2>Main task</h2>

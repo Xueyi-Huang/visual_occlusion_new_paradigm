@@ -1,8 +1,8 @@
-const review_mode = "off"; // if "on", the number of trials will be reduced for reviewing the experiment
+const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire 
 
-const repeatTimes = 1;
+const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 real trials.
 
 const itiDuration = 500;
 const fixationDuration = 500;
