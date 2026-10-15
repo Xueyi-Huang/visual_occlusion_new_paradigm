@@ -271,17 +271,6 @@ if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
     timeline.push(...vviqPages);
 }
 
-// A separate readiness screen keeps instruction navigation apart from practice.
-const practice_buffer = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: '',
-    on_start: function(trial) {
-        trial.stimulus = practiceBufferText(trial.data.isPractice);
-    },
-    choices: [' '],
-    data: {stage: 'before_practice'},
-};
-
 // Practice round 1: line judgments only.
 const practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
     .map(pair => generate_trial('practice_lines', pair, 0));
@@ -298,7 +287,6 @@ if (jump_to_questionnaire !== 'on') {
         show_clickable_nav: true,
         data: {stage: 'instructions', isPractice: 'practice_lines'},
     });
-    timeline.push({...practice_buffer, data: {stage: 'before_practice', isPractice: 'practice_lines', practice_round: 1}});
     timeline.push(practice_round_1);
 }
 
@@ -318,7 +306,6 @@ if (jump_to_questionnaire !== 'on') {
         show_clickable_nav: true,
         data: {stage: 'instructions', isPractice: 'practice_imagery'},
     });
-    timeline.push({...practice_buffer, data: {stage: 'before_practice', isPractice: 'practice_imagery', practice_round: 2}});
     timeline.push(practice_round_2);
 }
 
@@ -338,7 +325,6 @@ if (jump_to_questionnaire !== 'on') {
         show_clickable_nav: true,
         data: {stage: 'instructions', isPractice: 'practice_full'},
     });
-    timeline.push({...practice_buffer, data: {stage: 'before_practice', isPractice: 'practice_full', practice_round: 3}});
     timeline.push(practice_round_3);
 }
 
@@ -386,10 +372,6 @@ for (let index = 0; index < blockOrder.length; index++) {
             const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
             practiceTrials.forEach(trial => { trial.data.block_position = index + 1; });
             timeline.push({
-                ...practice_buffer,
-                data: {stage: 'before_practice', isPractice: 'practice_full', block_num: condition, block_position: index + 1},
-            });
-            timeline.push({
                 timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
                 timeline_variables: practiceTrials,
                 randomize_order: true,
@@ -397,7 +379,7 @@ for (let index = 0; index < blockOrder.length; index++) {
             });
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: `<div class="instructions"><p>Practice is complete. Continue using the same imagined bar position in block ${index + 1}.</p><p>Press Space to start the main trials.</p></div>`,
+                stimulus: afterBlockPracticeText(index + 1),
                 choices: [' '],
                 data: {stage: 'after_block_practice', block_num: condition, block_position: index + 1},
             });
