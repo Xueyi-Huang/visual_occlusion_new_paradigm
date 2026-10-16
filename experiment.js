@@ -19,7 +19,7 @@ if (subject_id == null) subject_id = 1200;
 Math.seedrandom(subject_id); // Reproduce assignment and trial order for this participant.
 const squareColor = Math.random() < 0.5 ? 'black' : 'white';
 const occluderColor = squareColor === 'black' ? 'white' : 'black';
-const blockOrder = shuffle([1, 2, 3]); // Condition IDs in participant-specific presentation order.
+const blockOrder = shuffle([1, 2, 3]); // 1 = middle, 2 = top, 3 = behind. Randomize the order of the three imagery conditions.
 const firstBlockCondition = blockOrder[0];
 const practiceImageryPosition = {1: 'middle', 2: 'top', 3: 'behind'}[firstBlockCondition];
 initializeTaskInstructions();
@@ -320,7 +320,7 @@ if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
 
 // Practice round 1: line judgments only.
 const practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_lines', pair, 0));
+    .map(pair => generate_trial('practice_lines', pair, 0, 'none'));
 const practice_round_1 = {
     timeline: [iti, fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
     timeline_variables: practice_trials_1,
@@ -339,7 +339,7 @@ if (jump_to_questionnaire !== 'on') {
 
 // Practice round 2: imagery and vividness ratings only.
 const practice_trials_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_imagery', pair, firstBlockCondition, practiceImageryPosition));
+    .map(pair => generate_trial('practice_imagery', pair, 1, practiceImageryPosition));
 const practice_round_2 = {
     timeline: [iti, fixation, imagery_stage, rating_stage],
     timeline_variables: practice_trials_2,
@@ -358,7 +358,7 @@ if (jump_to_questionnaire !== 'on') {
 
 // Practice round 3: combine imagery, line judgments, and vividness ratings.
 const practice_trials_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_full', pair, firstBlockCondition, practiceImageryPosition));
+    .map(pair => generate_trial('practice_full', pair, 1, practiceImageryPosition));
 const practice_round_3 = {
     timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
     timeline_variables: practice_trials_3,
@@ -377,13 +377,15 @@ if (jump_to_questionnaire !== 'on') {
 
 // Generate each block separately so trial order never mixes imagery conditions.
 practice = 'off';
+
 const blocks = [];
 for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
+    const condition = blockOrder[blockNum - 1];
     const blockTrials = [];
     for (let repetition = 0; repetition < repeatTimes; repetition++) {
         for (const lineLengths of linePairs) {
-            const position = blockNum === 1 ? 'middle'
-                : blockNum === 2 ? 'top' : 'behind';
+            const position = condition === 1 ? 'middle'
+                : condition === 2 ? 'top' : 'behind';
             blockTrials.push(generate_trial(practice, lineLengths, blockNum, position));
         }
     }
@@ -396,39 +398,38 @@ for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
 [block1, block2, block3] = blocks;
 trials = blocks.flat();
 
-// Full-task refreshers for the second and third presented blocks.
+// Full-task refreshers for the second and third blocks.
 const practice_trials_block_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block', pair, blockOrder[1], {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
+    .map(pair => generate_trial('practice_block', pair, 2, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
 const practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block', pair, blockOrder[2], {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
+    .map(pair => generate_trial('practice_block', pair, 3, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
 
 // Real trials: identical response sequence, with block-specific imagery cues.
 for (let index = 0; index < blockOrder.length; index++) {
+    const blockNum = index + 1;
     const condition = blockOrder[index];
-    const blockTrials = blocks[condition - 1];
-    blockTrials.forEach(trial => { trial.data.block_position = index + 1; });
+    const blockTrials = blocks[index];
     if (jump_to_questionnaire !== 'on') {
         timeline.push({
             type: jsPsychInstructions,
-            pages: blockInstructionPages(condition, index + 1),
+            pages: blockInstructionPages(condition, blockNum),
             show_clickable_nav: true,
-            data: {stage: 'block_instructions', block_num: condition, block_position: index + 1},
+            data: {stage: 'block_instructions', block_num: blockNum},
             on_start: function() { $('#progressContainer').hide(); },
         });
         if (index > 0) {
             const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
-            practiceTrials.forEach(trial => { trial.data.block_position = index + 1; });
             timeline.push({
                 timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
                 timeline_variables: practiceTrials,
                 randomize_order: true,
-                data: {isPractice: 'practice_block', block_num: condition, block_position: index + 1},
+                data: {isPractice: 'practice_block', block_num: blockNum},
             });
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: afterBlockPracticeText(index + 1, condition),
+                stimulus: afterBlockPracticeText(blockNum, condition),
                 choices: [' '],
-                data: {stage: 'after_block_practice', block_num: condition, block_position: index + 1},
+                data: {stage: 'after_block_practice', block_num: blockNum},
             });
         }
         timeline.push({
@@ -436,40 +437,35 @@ for (let index = 0; index < blockOrder.length; index++) {
             timeline_variables: blockTrials,
             randomize_order: false,
             on_timeline_start: function() { $('#progressContainer').show(); },
-            data: {isPractice: 'off', block_num: condition, block_position: index + 1},
+            data: {isPractice: 'off', block_num: blockNum},
         });
     }
 }
 
-function generate_trial(practice, lineLengths, blockNum, position = 'middle') {
+function generate_trial(practice, lineLengths, blockNum, position) {
     const isSame = lineLengths[0] === lineLengths[1];
     const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
     const responseDuration = practice === 'off' || practice === 'practice_block' || practice === 'practice_full' ? maxResponseTime : null;
     const imaginationDuration = practice !== 'off' ? imageryDurationPractice : imageryDuration;
     const imageryCues = {
+        none: '',
         middle: `Imagine a ${occluderColor} vertical bar in the MIDDLE`,
         top: `Imagine a ${occluderColor} horizontal bar at the TOP`,
-        bottom: `Imagine a ${occluderColor} horizontal bar at the BOTTOM`,
         behind: `Imagine a ${occluderColor} horizontal bar BEHIND the squares`,
     };
     return {
+        stimulus: gridStimulus(lineLengths),
         imagery_cue: imageryCues[position],
         presentation_duration: presentationDuration,
         response_duration: responseDuration,
         imagery_duration: imaginationDuration,
-        stimulus: gridStimulus(lineLengths),
         data: {
             isPractice: practice,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
-            presentation_duration_ms: presentationDuration,
-            response_duration_ms: responseDuration,
-            imagery_duration_ms: practice === 'practice_lines' ? 0 : imaginationDuration,
             correct_response: isSame ? keySame : keyDifferent,
-            correct_answer: isSame ? 'same' : 'different',
-            trial_condition: blockNum,
             block_num: blockNum,
-            imagery_position: practice === 'practice_lines' ? 'none' : position,
+            condition: practice === 'practice_lines' ? 'none' : position,
         },
     };
 }
