@@ -1,4 +1,5 @@
-const wellcome_text = '<p>This experiment runs in fullscreen. Click Begin to continue.</p>';
+const wellcome_text = '<p>This experiment runs in fullscreen. Please do not exit fullscreen during the experiment unless you wish to stop.</p>' +
+'<p>Please wait for a few seconds after you click the button. </p></div>';
 const block_text = 'This study requires a display running at 60 Hz or faster. Please refresh the page or use another display.';
 const good_frame_text = '<p>Display check complete. Click Next to read the instructions.</p>';
 let response_instructions, rating_instructions, line_practice_pages, imagery_practice_pages, full_practice_pages;
@@ -41,7 +42,7 @@ function initializeTaskInstructions() {
         instructionPage(`<p>Well done!</p><p>Next, you will practice <strong>imagining a bar as vividly as you can</strong> and rating your mental image.</p>`),
         ...imageryInstructionPages(firstBlockCondition),
         instructionPage(rating_instructions),
-        instructionPage(`<p>Let's practice imagining and rating the bar.</p><p>Please really try your best to imagine the bar <strong>as vividly as possible until the next screen appears</strong>.</p><p>Keep your right hand on your mouse or trackpad to click your rating.</p><p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p><p>If you are ready, click Next to start practice.</p>`),
+        instructionPage(`<p>Let's practice imagining and rating the bar.</p><p>Please really try your best to <strong>imagine the bar as vividly as possible until the next screen appears</strong>.</p><p>Keep your right hand on your mouse or trackpad to click your rating.</p><p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p><p>If you are ready, click Next to start practice.</p>`),
     ];
     full_practice_pages = [
         instructionPage(`<p>Well done!</p><p>Now, let's <strong>combine the imagination task with the same/different task</strong>. Click Next to read the complete procedure.</p>`),
@@ -224,7 +225,7 @@ function imageryInstructionPages(blockNumber) {
 function blockInstructionPages(blockNumber, blockPosition = blockNumber) {
     if (blockPosition === 1) {
         const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
-        return [instructionPage(`<p><strong>Well done!</strong> You've finished practice. Let's start the first block.</p>
+        return [instructionPage(`<p><strong>Well done!</strong> You've finished practice. Let's start the first block. Your tasks for the real trials are the same as those in the practice.</p>
             <p>${imageryDescription(blockNumber)}</p>
             ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}
             <p>Keep imagining the bar <strong>as vividly as possible</strong> until the red lines appear.</p>

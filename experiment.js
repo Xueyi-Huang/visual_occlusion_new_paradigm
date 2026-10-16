@@ -70,6 +70,15 @@ let preloadImages = {
 timeline.push(preloadImages);
 
 // Responses are accepted from line onset; show the question only if still unanswered.
+const iti = {
+    type: jsPsychHtmlKeyboardResponse,
+    css_classes: ['trial-frame'],
+    stimulus: '<div class="task-panel"></div>',
+    choices: 'NO_KEYS',
+    trial_duration: itiDuration,
+    data: () => ({...jsPsych.timelineVariable('data'), stage: 'iti'}),
+};
+
 const fixation = {
     type: jsPsychHtmlKeyboardResponse,
     css_classes: ['trial-frame'],
@@ -238,10 +247,10 @@ let fullscreen_on = {
         estimate_frame_duration(function(frame_rate) {
             frame_duration = frame_rate;
             console.log("Estimated frame duration: ", frame_rate);
-        }, 500, true);
+        }, 5000, true);
         $("#progressbar").hide();
     },
-    delay_after: 500
+    delay_after: 5000
 };
 timeline.push(fullscreen_on);
 
@@ -313,7 +322,7 @@ if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
 const practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
     .map(pair => generate_trial('practice_lines', pair, 0));
 const practice_round_1 = {
-    timeline: [fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
+    timeline: [iti, fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
     timeline_variables: practice_trials_1,
     randomize_order: true,
     data: {isPractice: 'practice_lines'},
@@ -332,7 +341,7 @@ if (jump_to_questionnaire !== 'on') {
 const practice_trials_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
     .map(pair => generate_trial('practice_imagery', pair, firstBlockCondition, practiceImageryPosition));
 const practice_round_2 = {
-    timeline: [fixation, imagery_stage, rating_stage],
+    timeline: [iti, fixation, imagery_stage, rating_stage],
     timeline_variables: practice_trials_2,
     randomize_order: true,
     data: {isPractice: 'practice_imagery'},
@@ -351,7 +360,7 @@ if (jump_to_questionnaire !== 'on') {
 const practice_trials_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
     .map(pair => generate_trial('practice_full', pair, firstBlockCondition, practiceImageryPosition));
 const practice_round_3 = {
-    timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+    timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
     timeline_variables: practice_trials_3,
     randomize_order: true,
     data: {isPractice: 'practice_full'},
@@ -410,7 +419,7 @@ for (let index = 0; index < blockOrder.length; index++) {
             const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
             practiceTrials.forEach(trial => { trial.data.block_position = index + 1; });
             timeline.push({
-                timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+                timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
                 timeline_variables: practiceTrials,
                 randomize_order: true,
                 data: {isPractice: 'practice_block', block_num: condition, block_position: index + 1},
@@ -423,7 +432,7 @@ for (let index = 0; index < blockOrder.length; index++) {
             });
         }
         timeline.push({
-            timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+            timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
             timeline_variables: blockTrials,
             randomize_order: false,
             on_timeline_start: function() { $('#progressContainer').show(); },

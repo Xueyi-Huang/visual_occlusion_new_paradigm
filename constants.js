@@ -1,7 +1,7 @@
-const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
+const review_mode = "off"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
-const skip_vviq = "on"; // Set to "on" to skip the VVIQ.
+const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
 
 const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per block, 192 total.
 
