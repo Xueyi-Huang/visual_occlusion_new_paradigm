@@ -123,7 +123,8 @@ const too_slow_warning = {
         data: {stage: 'too_slow_warning'},
     }],
     conditional_function: function() {
-        return jsPsych.data.getLastTrialData().values()[0].timed_out === true;
+        const judgment = jsPsych.data.getLastTrialData().values()[0];
+        return judgment.isPractice === 'off' && judgment.timed_out === true;
     },
 };
 const too_fast_warning = {

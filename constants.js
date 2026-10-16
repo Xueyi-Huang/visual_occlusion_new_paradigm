@@ -15,7 +15,7 @@ const minResponseTime = 200;
 
 const linesDurationPractice = 500; // Longer line viewing in practice round 1.
 const maxResponseTimePractice = 4000;
-const imageryDurationPractice = 4000;
+const imageryDurationPractice = 5000;
 
 const currentURL = window.location.href;
 const splitURL = currentURL.split("?")[1];

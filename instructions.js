@@ -1,7 +1,7 @@
 const wellcome_text = '<p>This experiment runs in fullscreen. Click Begin to continue.</p>';
 const block_text = 'This study requires a display running at 60 Hz or faster. Please refresh the page or use another display.';
 const good_frame_text = '<p>Display check complete. Click Next to read the instructions.</p>';
-let response_instructions, rating_instructions, imagery_instructions, line_practice_pages, imagery_practice_pages, full_practice_pages;
+let response_instructions, rating_instructions, line_practice_pages, imagery_practice_pages, full_practice_pages;
 
 // Build color-dependent text after participant assignment in experiment.js.
 function instructionImage(source, description) {
@@ -29,10 +29,6 @@ function initializeTaskInstructions() {
         <p>You will need to press <strong>${keySame}</strong> if they are the same length, or <strong>${keyDifferent}</strong> if they are different lengths.</p>`;
     rating_instructions = `<p>Then, you will be asked to <strong>rate how vivid your mental image was</strong>.</p>
         <p>Rate each trial <strong>based on your experience during that specific one</strong>, independently of how you've rated other trials. Choose 1 if you could not form an image, and 5 if it was as vivid as actually seeing the bar.</p>`;
-    imagery_instructions = `<p>${imageryDescription(firstBlockCondition)}</p>
-        <p>The picture below illustrates what you should imagine. The bar itself will not appear during the trials. Please keep the two ${squareColor} squares in their original positions.</p>
-        <p>Please imagine the bar <strong>with your eyes open</strong>, and keep it in your mind as vividly as possible <strong>until the next screen appears</strong>.</p>
-        ${instructionImage(occluderIllustration(practiceImageryPosition), imageryDescription(firstBlockCondition))}`;
     line_practice_pages = [
         instructionPage(`<p>${skip_vviq === 'off' ? 'Thanks for the help. And welcome to the experiment part!' : 'Welcome! Thanks for helping us better understand how vision and imagination work.'}</p>
             <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths as quickly and accurately as you can</strong>.</p>`),
@@ -43,17 +39,17 @@ function initializeTaskInstructions() {
     ];
     imagery_practice_pages = [
         instructionPage(`<p>Well done!</p><p>Next, you will practice <strong>imagining a bar as vividly as you can</strong> and rating your mental image.</p>`),
-        instructionPage(imagery_instructions),
+        ...imageryInstructionPages(firstBlockCondition),
         instructionPage(rating_instructions),
         instructionPage(`<p>Let's practice imagining and rating the bar.</p><p>Please really try your best to imagine the bar <strong>as vividly as possible until the next screen appears</strong>.</p><p>Keep your right hand on your mouse or trackpad to click your rating.</p><p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p><p>If you are ready, click Next to start practice.</p>`),
     ];
     full_practice_pages = [
         instructionPage(`<p>Well done!</p><p>Now, let's <strong>combine the imagination task with the same/different task</strong>. Click Next to read the complete procedure.</p>`),
         fixationInstruction(),
-        instructionPage(imagery_instructions),
-        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible while the two red lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
+        ...imageryInstructionPages(firstBlockCondition),
+        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible until the two red lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
         instructionPage(rating_instructions),
-        instructionPage(`<p>Please really try your best to imagine the bar and keep it in mind while viewing the lines. We also need you to respond <strong>as quickly and accurately as possible</strong>.</p>${practiceStartText()}`),
+        instructionPage(`<p>Please really try your best to imagine the bar and keep it in mind. We also need you to respond to the lines <strong>as quickly and accurately as possible</strong>.</p>${practiceStartText()}`),
     ];
 }
 
@@ -195,9 +191,9 @@ function initial_instruction_pages() {
 // Block-specific imagery instructions and examples.
 function imageryDescription(blockNumber) {
     const descriptions = {
-        1: `Imagine a ${occluderColor} bar standing upright between the two ${squareColor} squares. It covers the middle three grid squares.`,
-        2: `Imagine a ${occluderColor} bar lying across the top of the two ${squareColor} squares. It covers three grid squares just above them.`,
-        3: `Imagine a ${occluderColor} bar lying across the whole middle row, behind the two ${squareColor} squares. The squares hide the parts of the bar behind them.`,
+        1: `You'll need to imagine a ${occluderColor} bar standing upright between the two ${squareColor} squares. It covers the middle three grid squares.`,
+        2: `You'll need to imagine a ${occluderColor} bar lying across the top of the two ${squareColor} squares. It covers three grid squares just above them.`,
+        3: `You'll need to imagine a ${occluderColor} bar lying across the whole middle row, behind the two ${squareColor} squares. The squares hide the parts of the bar behind them.`,
     };
     return descriptions[blockNumber];
 }
@@ -209,16 +205,32 @@ function afterBlockPracticeText(blockPosition) {
         <p>Press Space when you're ready to start.</p>`);
 }
 
-function blockInstructionPages(blockNumber, blockPosition = blockNumber) {
+function imageryInstructionPages(blockNumber) {
     const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
+    return [
+        instructionPage(`
+            <p>In the imagination task, you'll see the grid with two ${squareColor} squares on the screen.</p>
+            ${instructionImage(gridStimulus(), `Gray grid with two ${squareColor} squares and no bar`)}`),
+        instructionPage(`<p>${imageryDescription(blockNumber)}</p>
+            <p>This picture shows <strong>what to imagine in your mind</strong>. Keep your eyes open and imagine the ${occluderColor} bar <strong>as vividly as possible until the next screen</strong>.</p>
+            ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}
+`),
+    ];
+}
+
+function blockInstructionPages(blockNumber, blockPosition = blockNumber) {
+    if (blockPosition === 1) {
+        return [instructionPage(`<p><strong>Well done!</strong> You've finished practice. Let's start the first block.</p>
+            <p>${imageryDescription(blockNumber)}</p>
+            <p>Keep imagining the bar <strong>as vividly as possible</strong> while you look at the lines.</p>
+            <p>Judge the line lengths <strong>quickly and accurately</strong>: ${keySame} = same, ${keyDifferent} = different. Then rate how vivid your image was.</p>
+            <p>Click Next when you're ready. Good luck!</p>`)];
+    }
     return [
         instructionPage(`<p>Welcome to block ${blockPosition}!</p>
             <p>In this block, you'll continue with the <strong>imagination task combined with the same/different task</strong>. Click Next to see what you should imagine.</p>`),
-        instructionPage(`<p>After the cross, the grid and two ${squareColor} squares will appear. Your task is to <strong>imagine the ${occluderColor} bar as vividly as you can</strong>.</p>
-            <p>${imageryDescription(blockNumber)}</p>
-            <p>The picture below illustrates what you should imagine. The bar itself will not appear during the trials. The two ${squareColor} squares will remain in their original positions when you imagine the bar.</p>
-            ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}`),
-        instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it as vividly as possible while the two red lines appear.</p>
+        ...imageryInstructionPages(blockNumber),
+        instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it <strong>as vividly as possible until the two red lines appear</strong>.</p>
             ${response_instructions}
             ${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
         instructionPage(rating_instructions),
