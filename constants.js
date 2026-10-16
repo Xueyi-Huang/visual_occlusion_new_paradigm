@@ -13,8 +13,7 @@ const feedbackDuration = 1000;
 const maxResponseTime = 2000;
 const minResponseTime = 200;
 
-const linesDurationPractice = 500; // Longer line viewing in practice round 1.
-const maxResponseTimePractice = 4000;
+const linesDurationPractice = 750; // Longer line viewing in practice round 1.
 const imageryDurationPractice = 5000;
 
 const currentURL = window.location.href;

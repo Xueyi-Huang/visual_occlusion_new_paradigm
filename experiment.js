@@ -50,6 +50,8 @@ jsPsych.data.addProperties({
 
 let frame_duration;
 let frame_rate;
+let linesOnsetTime;
+let questionOnsetTime;
 let trials = [];
 let block1 = [];
 let block2 = [];
@@ -67,7 +69,7 @@ let preloadImages = {
 };
 timeline.push(preloadImages);
 
-// A probe is shown without accepting responses, then replaced by the judgment screen.
+// Responses are accepted from line onset; show the question only if still unanswered.
 const fixation = {
     type: jsPsychHtmlKeyboardResponse,
     css_classes: ['trial-frame'],
@@ -82,35 +84,68 @@ const imagery_stage = {
     css_classes: ['trial-frame'],
     stimulus: gridStimulus(),
     choices: "NO_KEYS",
-    prompt: () => `<p>${jsPsych.timelineVariable('imagery_cue')}</p>`,
+    prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+        ? '' : `<p>${jsPsych.timelineVariable('imagery_cue')}</p>`,
     trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'imagery'}),
 };
+function finishLineJudgment(data) {
+    data.stage = 'judgment';
+    data.timed_out = data.response === null;
+    data.too_fast = !data.timed_out && data.rt_from_lines <= minResponseTime;
+    data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+    data.trial_num = data.isPractice === 'off' ? real_trial_num++ : 0;
+    if (save_data_locally !== 'on') saveData();
+}
+
 const lines_stage = {
     type: jsPsychImageKeyboardResponse,
     render_on_canvas: false,
     css_classes: ['trial-frame'],
     stimulus: jsPsych.timelineVariable('stimulus'),
-    prompt: '<p>Compare the two red lines</p>',
-    choices: "NO_KEYS",
+    prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+        ? '' : '<p>Compare the two red lines</p>',
+    choices: [keySame, keyDifferent],
+    response_ends_trial: true,
     trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
+    on_load: function() {
+        linesOnsetTime = performance.now();
+    },
+    on_finish: function(data) {
+        if (data.response !== null) {
+            data.response_stage = 'lines';
+            data.rt_from_lines = data.rt;
+            data.rt_from_question = null;
+            finishLineJudgment(data);
+        }
+    },
 };
 const test_stage = {
-    type: jsPsychHtmlKeyboardResponse,
-    css_classes: ['trial-frame'],
-    stimulus: '<div class="task-panel">Same or different length?</div>',
-    choices: [keySame, keyDifferent],
-    prompt: '<p>S = Same, D = Different</p>',
-    trial_duration: () => jsPsych.timelineVariable('response_duration'),
-    response_ends_trial: true,
-    data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
-    on_finish: function(data) {
-        data.timed_out = data.response === null;
-        data.too_fast = !data.timed_out && data.rt !== null && data.rt <= minResponseTime;
-        data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
-        data.trial_num = data.isPractice === 'off' ? real_trial_num++ : 0;
-        if (save_data_locally !== "on") saveData();
+    timeline: [{
+        type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['trial-frame'],
+        stimulus: '<div class="task-panel">Same or Different?</div>',
+        choices: [keySame, keyDifferent],
+        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+            ? '' : '<p>S = Same, D = Different</p>',
+        trial_duration: () => jsPsych.timelineVariable('response_duration'),
+        response_ends_trial: true,
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
+        on_load: function() {
+            questionOnsetTime = performance.now();
+        },
+        on_finish: function(data) {
+            data.response_stage = 'question';
+            data.rt_from_question = data.rt;
+            data.rt_from_lines = data.response !== null && data.rt !== null
+                ? questionOnsetTime - linesOnsetTime + data.rt : null;
+            data.rt = data.rt_from_lines; // All judgment RTs use line onset.
+            finishLineJudgment(data);
+        },
+    }],
+    conditional_function: function() {
+        return jsPsych.data.getLastTrialData().values()[0].response === null;
     },
 };
 const too_slow_warning = {
@@ -124,7 +159,8 @@ const too_slow_warning = {
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.getLastTrialData().values()[0];
-        return judgment.isPractice === 'off' && judgment.timed_out === true;
+        return (judgment.isPractice === 'off' || judgment.isPractice === 'practice_block' || judgment.isPractice === 'practice_full')
+            && judgment.timed_out === true;
     },
 };
 const too_fast_warning = {
@@ -166,7 +202,8 @@ const rating_stage = {
     css_classes: ['trial-frame'],
     choices: ["1", "2", "3", "4", "5"],
     stimulus: '<div class="task-panel rating-panel">How vivid?</div>',
-    prompt: '<p>1 (Not vivid at all) - 5 (Perfectly vivid)</p>',
+    prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+        ? '' : '<p>1 (Not vivid at all) - 5 (Perfectly vivid)</p>',
     data: () => ({...jsPsych.timelineVariable('data'), stage: 'vividness'}),
     on_start: function() {
         document.documentElement.style.cursor = 'default';
@@ -352,9 +389,9 @@ trials = blocks.flat();
 
 // Full-task refreshers for the second and third presented blocks.
 const practice_trials_block_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_full', pair, blockOrder[1], {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
+    .map(pair => generate_trial('practice_block', pair, blockOrder[1], {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
 const practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_full', pair, blockOrder[2], {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
+    .map(pair => generate_trial('practice_block', pair, blockOrder[2], {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
 
 // Real trials: identical response sequence, with block-specific imagery cues.
 for (let index = 0; index < blockOrder.length; index++) {
@@ -376,11 +413,11 @@ for (let index = 0; index < blockOrder.length; index++) {
                 timeline: [fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
                 timeline_variables: practiceTrials,
                 randomize_order: true,
-                data: {isPractice: 'practice_full', block_num: condition, block_position: index + 1},
+                data: {isPractice: 'practice_block', block_num: condition, block_position: index + 1},
             });
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: afterBlockPracticeText(index + 1),
+                stimulus: afterBlockPracticeText(index + 1, condition),
                 choices: [' '],
                 data: {stage: 'after_block_practice', block_num: condition, block_position: index + 1},
             });
@@ -398,7 +435,7 @@ for (let index = 0; index < blockOrder.length; index++) {
 function generate_trial(practice, lineLengths, blockNum, position = 'middle') {
     const isSame = lineLengths[0] === lineLengths[1];
     const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
-    const responseDuration = practice === 'practice_lines' ? maxResponseTimePractice : maxResponseTime;
+    const responseDuration = practice === 'off' || practice === 'practice_block' || practice === 'practice_full' ? maxResponseTime : null;
     const imaginationDuration = practice !== 'off' ? imageryDurationPractice : imageryDuration;
     const imageryCues = {
         middle: `Imagine a ${occluderColor} vertical bar in the MIDDLE`,
