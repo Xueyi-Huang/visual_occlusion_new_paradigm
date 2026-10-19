@@ -101,9 +101,10 @@ const imagery_stage = {
 };
 function finishLineJudgment(data) {
     data.stage = 'judgment';
-    data.timed_out = data.response === null;
-    data.too_fast = !data.timed_out && data.rt_from_lines <= minResponseTime;
-    data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+    data.response_status = data.response === null ? 'too_slow'
+        : data.rt_from_lines <= minResponseTime ? 'too_fast' : 'valid';
+    data.correct = data.response_status === 'valid'
+        ? Number(jsPsych.pluginAPI.compareKeys(data.response, data.correct_response)) : 0;
     data.trial_num = data.real_trial_num;
     if (save_data_locally !== 'on') saveData();
 }
@@ -126,7 +127,6 @@ const lines_stage = {
         if (data.response !== null) {
             data.response_stage = 'lines';
             data.rt_from_lines = data.rt;
-            data.rt_from_question = null;
             finishLineJudgment(data);
         }
     },
@@ -147,7 +147,6 @@ const test_stage = {
         },
         on_finish: function(data) {
             data.response_stage = 'question';
-            data.rt_from_question = data.rt;
             data.rt_from_lines = data.response !== null && data.rt !== null
                 ? questionOnsetTime - linesOnsetTime + data.rt : null;
             data.rt = data.rt_from_lines; // All judgment RTs use line onset.
@@ -169,8 +168,8 @@ const too_slow_warning = {
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.getLastTrialData().values()[0];
-        return (judgment.isPractice === 'off' || judgment.isPractice === 'practice_block' || judgment.isPractice === 'practice_full')
-            && judgment.timed_out === true;
+        return (judgment.isPractice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(judgment.isPractice))
+            && judgment.response_status === 'too_slow';
     },
 };
 const too_fast_warning = {
@@ -184,7 +183,7 @@ const too_fast_warning = {
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-        return judgment.too_fast === true;
+        return judgment.response_status === 'too_fast';
     },
 };
 const break_pause = {
@@ -206,12 +205,12 @@ const response_feedback = {
         trial_duration: feedbackDuration,
         data: function() {
             const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-            return {stage: 'feedback', correct: judgment.correct, trial_num: judgment.trial_num, real_trial_num: judgment.real_trial_num};
+            return {stage: 'feedback', correct: judgment.correct, response_status: judgment.response_status, trial_num: judgment.trial_num, real_trial_num: judgment.real_trial_num};
         },
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-        return !judgment.timed_out && !judgment.too_fast;
+        return judgment.response_status === 'valid';
     },
 };
 const rating_stage = {
@@ -306,10 +305,9 @@ const vviqPages = vviqQuestions.map((questions, pageIndex) => ({
     on_finish: function(data) {
         questions.forEach((_, itemIndex) => {
             const name = `vviq${pageIndex * 4 + itemIndex + 1}`;
-            data[name] = vviqScores[vviqOptions.indexOf(data.response[name])];
+            data.response[name] = vviqScores[vviqOptions.indexOf(data.response[name])];
         });
-        data.responses = JSON.stringify(data.response);
-        if (save_data_locally !== 'on') saveData();
+        saveQuestionnaire(data);
     },
 }));
 if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
@@ -366,19 +364,19 @@ if (jump_to_questionnaire !== 'on') {
 
 // Practice round 3: combine imagery, line judgments, and vividness ratings.
 const practice_trials_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_full', pair, 1, practiceImageryPosition));
+    .map(pair => generate_trial('practice_block_1', pair, 1, practiceImageryPosition));
 const practice_round_3 = {
     timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
     timeline_variables: practice_trials_3,
     randomize_order: true,
-    data: {isPractice: 'practice_full'},
+    data: {isPractice: 'practice_block_1'},
 };
 if (jump_to_questionnaire !== 'on') {
     timeline.push({
         type: jsPsychInstructions,
         pages: full_practice_pages,
         show_clickable_nav: true,
-        data: {stage: 'instructions', isPractice: 'practice_full'},
+        data: {stage: 'instructions', isPractice: 'practice_block_1'},
     });
     timeline.push(practice_round_3);
 }
@@ -411,9 +409,9 @@ trials = blocks.flat();
 
 // Full-task refreshers for the second and third blocks.
 const practice_trials_block_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block', pair, 2, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
+    .map(pair => generate_trial('practice_block_2', pair, 2, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
 const practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block', pair, 3, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
+    .map(pair => generate_trial('practice_block_3', pair, 3, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
 
 // Real trials: identical response sequence, with block-specific imagery cues.
 for (let index = 0; index < blockOrder.length; index++) {
@@ -437,7 +435,7 @@ for (let index = 0; index < blockOrder.length; index++) {
                 timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
                 timeline_variables: practiceTrials,
                 randomize_order: true,
-                data: {isPractice: 'practice_block', block_num: blockNum},
+                data: {isPractice: `practice_block_${blockNum}`, block_num: blockNum},
             });
             timeline.push(break_pause);
             timeline.push({
@@ -462,7 +460,7 @@ for (let index = 0; index < blockOrder.length; index++) {
 function generate_trial(practice, lineLengths, blockNum, position) {
     const isSame = lineLengths[0] === lineLengths[1];
     const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
-    const responseDuration = practice === 'off' || practice === 'practice_block' || practice === 'practice_full' ? maxResponseTime : null;
+    const responseDuration = practice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(practice) ? maxResponseTime : null;
     const imaginationDuration = practice !== 'off' ? imageryDurationPractice : imageryDuration;
     const imageryCues = {
         none: '',
@@ -499,9 +497,11 @@ let thank_you = {
 };
 timeline.push(thank_you);
 
-// Closing questionnaires: keep text responses alongside any numeric scores.
+// Keep questionnaire answers in a single JSON response column.
 function saveQuestionnaire(data) {
-    data.responses = JSON.stringify(data.response);
+    if (data.response !== null && typeof data.response === 'object') {
+        data.response = JSON.stringify(data.response);
+    }
     if (save_data_locally !== 'on') saveData();
 }
 
@@ -518,7 +518,6 @@ const projectorQuestion = {
     data: {stage: 'imagery_experience'},
     button_label: 'Continue',
     on_finish: function(data) {
-        data.projector_type = data.response.projector_type;
         saveQuestionnaire(data);
     },
 };
@@ -565,7 +564,7 @@ const finalQuestionsPage = {
         finalQuestions.forEach((_, index) => {
             const options = index === 0 ? finalOptions : percentageOptions;
             const name = `final_q_${index + 1}`;
-            data[name] = options.indexOf(data.response[name]) + 1;
+            data.response[name] = options.indexOf(data.response[name]) + 1;
         });
         saveQuestionnaire(data);
     },
