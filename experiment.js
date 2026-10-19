@@ -15,8 +15,9 @@ let jsPsych = initJsPsych({
 
 // capture info from Prolific
 let subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
-if (subject_id == null) subject_id = 1200;
+if (subject_id == null) subject_id = 0;
 Math.seedrandom(subject_id); // Reproduce assignment and trial order for this participant.
+
 const squareColor = Math.random() < 0.5 ? 'black' : 'white';
 const occluderColor = squareColor === 'black' ? 'white' : 'black';
 const blockOrder = shuffle([1, 2, 3]); // 1 = middle, 2 = top, 3 = behind. Randomize the order of the three imagery conditions.
@@ -103,7 +104,7 @@ function finishLineJudgment(data) {
     data.timed_out = data.response === null;
     data.too_fast = !data.timed_out && data.rt_from_lines <= minResponseTime;
     data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
-    data.trial_num = data.isPractice === 'off' ? real_trial_num++ : 0;
+    data.trial_num = data.real_trial_num;
     if (save_data_locally !== 'on') saveData();
 }
 
@@ -198,7 +199,7 @@ const response_feedback = {
         trial_duration: feedbackDuration,
         data: function() {
             const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-            return {stage: 'feedback', correct: judgment.correct, trial_num: judgment.trial_num};
+            return {stage: 'feedback', correct: judgment.correct, trial_num: judgment.trial_num, real_trial_num: judgment.real_trial_num};
         },
     }],
     conditional_function: function() {
@@ -315,7 +316,7 @@ if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
             $('#progressContainer').hide();
         },
     });
-    timeline.push(...vviqPages);
+    timeline.push(...(review_mode === 'on' ? vviqPages.slice(0, 1) : vviqPages));
 }
 
 // Practice round 1: line judgments only.
@@ -393,6 +394,9 @@ for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
     if (review_mode === 'on') {
         blockTrials.splice(2);
     }
+    blockTrials.forEach(trial => {
+        trial.data.real_trial_num = real_trial_num++;
+    });
     blocks.push(blockTrials);
 }
 [block1, block2, block3] = blocks;
@@ -461,6 +465,7 @@ function generate_trial(practice, lineLengths, blockNum, position) {
         imagery_duration: imaginationDuration,
         data: {
             isPractice: practice,
+            real_trial_num: 0,
             left_line_length_px: lineLengths[0],
             right_line_length_px: lineLengths[1],
             correct_response: isSame ? keySame : keyDifferent,

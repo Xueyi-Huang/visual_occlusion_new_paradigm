@@ -21,8 +21,9 @@ function practiceStartText() {
 }
 
 function fixationInstruction() {
+    const illustration = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${taskFrameSize}" height="${taskFrameSize}" viewBox="0 0 ${taskFrameSize} ${taskFrameSize}"><rect width="${taskFrameSize}" height="${taskFrameSize}" fill="lightgray"/><text x="${taskFrameSize / 2}" y="${taskFrameSize / 2}" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="32" fill="black">+</text>${taskFrameOutline()}</svg>`);
     return instructionPage(`<p>At the beginning of each trial, a cross will appear in the center of the screen. Please <strong>keep your gaze at the center throughout the trial</strong>.</p>
-        <div class="task-panel fixation-text" style="width:240px;height:240px;margin:16px auto;">+</div>`);
+        ${instructionImage(illustration, 'Fixation cross centered in the box')}`);
 }
 
 function initializeTaskInstructions() {
@@ -40,6 +41,7 @@ function initializeTaskInstructions() {
     ];
     imagery_practice_pages = [
         instructionPage(`<p>Well done!</p><p>Next, you will practice <strong>imagining a bar as vividly as you can</strong> and rating your mental image.</p>`),
+        fixationInstruction(),
         ...imageryInstructionPages(firstBlockCondition),
         instructionPage(rating_instructions),
         instructionPage(`<p>Let's practice imagining and rating the bar.</p><p>Please really try your best to <strong>imagine the bar as vividly as possible until the next screen appears</strong>.</p><p>Keep your right hand on your mouse or trackpad to click your rating.</p><p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p><p>If you are ready, click Next to start practice.</p>`),
@@ -213,7 +215,7 @@ function imageryInstructionPages(blockNumber) {
     const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
     return [
         instructionPage(`
-            <p>In the imagination task, you'll see the grid with two ${squareColor} squares on the screen.</p>
+            <p>Then, you'll see the grid with two ${squareColor} squares on the screen.</p>
             ${instructionImage(gridStimulus(), `Gray grid with two ${squareColor} squares and no bar`)}`),
         instructionPage(`<p>${imageryDescription(blockNumber)}</p>
             <p>This picture shows <strong>what to imagine in your mind</strong>. Keep your eyes open and imagine the ${occluderColor} bar <strong>as vividly as possible until the next screen</strong>.</p>
