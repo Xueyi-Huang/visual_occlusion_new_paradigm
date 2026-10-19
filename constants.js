@@ -3,6 +3,9 @@ const save_data_locally = "on"; // if "on", the data will be saved locally after
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
 const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
 
+// Imagery condition IDs; independent of randomized block order.
+const conditionPositions = {1: 'middle', 2: 'top', 3: 'behind'};
+
 const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per block, 192 total.
 
 const itiDuration = 500;

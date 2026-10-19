@@ -192,56 +192,56 @@ function initial_instruction_pages() {
 };
 
 // Block-specific imagery instructions and examples.
-function imageryDescription(blockNumber) {
+function imageryDescription(conditionId) {
     const descriptions = {
         1: `You'll need to <strong>imagine a ${occluderColor} bar standing upright between the two ${squareColor} squares</strong>. It covers the <strong>middle three grid squares</strong>.`,
         2: `You'll need to <strong>imagine a ${occluderColor} bar lying across the top of the two ${squareColor} squares</strong>. It covers the <strong> three grid squares</strong> just above them.`,
         3: `You'll need to <strong>imagine a ${occluderColor} bar lying across the whole middle row</strong>. The bar is <strong>behind the ${squareColor} squares</strong>.`,
     };
-    return descriptions[blockNumber];
+    return descriptions[conditionId];
 }
 
-function afterBlockPracticeText(blockPosition, blockNumber) {
-    const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
+function afterBlockPracticeText(blockNum, conditionId) {
+    const position = conditionPositions[conditionId];
     return instructionPage(`<p><strong>Well done!</strong> You've finished practice for this block. Your tasks for the real trials are the same as those in the practice. Just a refresher:</p>
-        <p>${imageryDescription(blockNumber)}</p>
-        ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}
+        <p>${imageryDescription(conditionId)}</p>
+        ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
         <p>Keep imagining the bar <strong>as vividly as possible</strong> until the red lines appear.</p>
         <p>Also, try to judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
         <p>Press "Space" when you're ready to start.</p>`);
 }
 
-function imageryInstructionPages(blockNumber) {
-    const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
+function imageryInstructionPages(conditionId) {
+    const position = conditionPositions[conditionId];
     return [
         instructionPage(`
             <p>Then, you'll see the grid with two ${squareColor} squares on the screen.</p>
             ${instructionImage(gridStimulus(), `Gray grid with two ${squareColor} squares and no bar`)}`),
-        instructionPage(`<p>${imageryDescription(blockNumber)}</p>
+        instructionPage(`<p>${imageryDescription(conditionId)}</p>
             <p>This picture shows <strong>what to imagine in your mind</strong>. Keep your eyes open and imagine the ${occluderColor} bar <strong>as vividly as possible until the next screen</strong>.</p>
-            ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}
+            ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
 `),
     ];
 }
 
-function blockInstructionPages(blockNumber, blockPosition = blockNumber) {
-    if (blockPosition === 1) {
-        const position = {1: 'middle', 2: 'top', 3: 'behind'}[blockNumber];
+function blockInstructionPages(conditionId, blockNum) {
+    if (blockNum === 1) {
+        const position = conditionPositions[conditionId];
         return [instructionPage(`<p><strong>Well done!</strong> You've finished practice. Let's start the first block. Your tasks for the real trials are the same as those in the practice.</p>
-            <p>${imageryDescription(blockNumber)}</p>
-            ${instructionImage(occluderIllustration(position), imageryDescription(blockNumber))}
+            <p>${imageryDescription(conditionId)}</p>
+            ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
             <p>Keep imagining the bar <strong>as vividly as possible</strong> until the red lines appear.</p>
             <p>Judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
             <p>Click "Next" when you're ready. Good luck!</p>`)];
     }
     const totalBlocks = Math.max(1, maxBlockNum || 3);
-    const welcomeText = blockPosition === totalBlocks
+    const welcomeText = blockNum === totalBlocks
         ? '<p>Welcome to the final block!</p>'
-        : `<p>Welcome to block ${blockPosition}!</p>`;
+        : `<p>Welcome to block ${blockNum}!</p>`;
     return [
         instructionPage(`${welcomeText}
             <p>In this block, you'll continue with the <strong>imagination task combined with the same/different task</strong>. Click "Next" to see what you should imagine.</p>`),
-        ...imageryInstructionPages(blockNumber),
+        ...imageryInstructionPages(conditionId),
         instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it <strong>as vividly as possible until the two red lines appear</strong>.</p>
             ${response_instructions}
             ${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),

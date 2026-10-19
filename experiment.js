@@ -22,7 +22,7 @@ const squareColor = Math.random() < 0.5 ? 'black' : 'white';
 const occluderColor = squareColor === 'black' ? 'white' : 'black';
 const blockOrder = shuffle([1, 2, 3]); // 1 = middle, 2 = top, 3 = behind. Randomize the order of the three imagery conditions.
 const firstBlockCondition = blockOrder[0];
-const practiceImageryPosition = {1: 'middle', 2: 'top', 3: 'behind'}[firstBlockCondition];
+const practiceImageryPosition = conditionPositions[firstBlockCondition];
 initializeTaskInstructions();
 let study_id = jsPsych.data.getURLVariable('STUDY_ID');
 let session_id = jsPsych.data.getURLVariable('SESSION_ID');
@@ -384,8 +384,7 @@ for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
     const blockTrials = [];
     for (let repetition = 0; repetition < repeatTimes; repetition++) {
         for (const lineLengths of linePairs) {
-            const position = condition === 1 ? 'middle'
-                : condition === 2 ? 'top' : 'behind';
+            const position = conditionPositions[condition];
             blockTrials.push(generate_trial(practice, lineLengths, blockNum, position));
         }
     }
@@ -403,9 +402,9 @@ trials = blocks.flat();
 
 // Full-task refreshers for the second and third blocks.
 const practice_trials_block_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block_2', pair, 2, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[1]]));
+    .map(pair => generate_trial('practice_block_2', pair, 2, conditionPositions[blockOrder[1]]));
 const practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block_3', pair, 3, {1: 'middle', 2: 'top', 3: 'behind'}[blockOrder[2]]));
+    .map(pair => generate_trial('practice_block_3', pair, 3, conditionPositions[blockOrder[2]]));
 
 // Real trials: identical response sequence, with block-specific imagery cues.
 for (let index = 0; index < blockOrder.length; index++) {
