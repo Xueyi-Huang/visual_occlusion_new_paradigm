@@ -187,6 +187,13 @@ const too_fast_warning = {
         return judgment.too_fast === true;
     },
 };
+const break_pause = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: '<div></div>',
+    choices: 'NO_KEYS',
+    trial_duration: 750,
+    data: {stage: 'break_pause'},
+};
 const response_feedback = {
     timeline: [{
         type: jsPsychHtmlKeyboardResponse,
@@ -414,6 +421,7 @@ for (let index = 0; index < blockOrder.length; index++) {
     const condition = blockOrder[index];
     const blockTrials = blocks[index];
     if (jump_to_questionnaire !== 'on') {
+        timeline.push(break_pause);
         timeline.push({
             type: jsPsychInstructions,
             pages: blockInstructionPages(condition, blockNum),
@@ -421,21 +429,26 @@ for (let index = 0; index < blockOrder.length; index++) {
             data: {stage: 'block_instructions', block_num: blockNum},
             on_start: function() { $('#progressContainer').hide(); },
         });
+        timeline.push(break_pause);
         if (index > 0) {
             const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
+            timeline.push(break_pause);
             timeline.push({
                 timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
                 timeline_variables: practiceTrials,
                 randomize_order: true,
                 data: {isPractice: 'practice_block', block_num: blockNum},
             });
+            timeline.push(break_pause);
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: afterBlockPracticeText(blockNum, condition),
                 choices: [' '],
                 data: {stage: 'after_block_practice', block_num: blockNum},
             });
+            timeline.push(break_pause);
         }
+        timeline.push(break_pause);
         timeline.push({
             timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
             timeline_variables: blockTrials,

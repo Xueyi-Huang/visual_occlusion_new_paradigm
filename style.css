@@ -21,6 +21,14 @@ body, html {
     margin: auto;
 }
 
+.instructions p {
+    margin: 0.4em 0;
+}
+
+.instructions img {
+    margin: 8px auto;
+}
+
 .left-aligned {
     text-align: left;
 }

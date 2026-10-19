@@ -57,7 +57,7 @@ function initializeTaskInstructions() {
 }
 
 const thank_you_text = '<p>Thank you for completing the task! A few brief questionnaires are all that remain.</p><p>Press Space to continue.</p>';
-const buffer_text = '<p>Thank you for participating! Click Submit to finish and continue to the debriefing page.</p>';
+const buffer_text = '<p>Thank you for participating! Please allow 3 seconds for the data to be downloaded, and then click Submit to proceed to the debriefing page.</p>';
 
 // empty box gender
 const demographics_html = `
@@ -234,8 +234,12 @@ function blockInstructionPages(blockNumber, blockPosition = blockNumber) {
             <p>Judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
             <p>Click Next when you're ready. Good luck!</p>`)];
     }
+    const totalBlocks = Math.max(1, maxBlockNum || 3);
+    const welcomeText = blockPosition === totalBlocks
+        ? '<p>Welcome to the final block!</p>'
+        : `<p>Welcome to block ${blockPosition}!</p>`;
     return [
-        instructionPage(`<p>Welcome to block ${blockPosition}!</p>
+        instructionPage(`${welcomeText}
             <p>In this block, you'll continue with the <strong>imagination task combined with the same/different task</strong>. Click Next to see what you should imagine.</p>`),
         ...imageryInstructionPages(blockNumber),
         instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it <strong>as vividly as possible until the two red lines appear</strong>.</p>
