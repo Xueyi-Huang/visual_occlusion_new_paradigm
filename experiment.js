@@ -171,8 +171,7 @@ const too_slow_warning = {
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.getLastTrialData().values()[0];
-        return (judgment.isPractice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(judgment.isPractice))
-            && judgment.response_status === 'too_slow';
+        return judgment.response_status === 'too_slow';
     },
 };
 const too_fast_warning = {
@@ -247,6 +246,7 @@ let fullscreen_on = {
     on_start: function() {
         estimate_frame_duration(function(frame_rate) {
             frame_duration = frame_rate;
+            jsPsych.data.addProperties({frame_duration});
             console.log("Estimated frame duration: ", frame_rate);
         }, 5000, true);
         $("#progressbar").hide();
@@ -278,9 +278,9 @@ let frame_duration_exclusion = {
         });
     }
 };
-// if (jump_to_questionnaire != "on") {
-//     timeline.push(frame_duration_exclusion);
-// }
+if (jump_to_questionnaire != "on") {
+    timeline.push(frame_duration_exclusion);
+}
 
 
 // VVIQ: four scenes with four required ratings each.
