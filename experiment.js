@@ -86,7 +86,7 @@ const fixation = {
     stimulus: '<div class="task-panel fixation-text">+</div>',
     choices: "NO_KEYS",
     trial_duration: fixationDuration,
-    data: {stage: 'fixation'},
+    data: () => ({...jsPsych.timelineVariable('data'), stage: 'fixation'}),
 };
 const imagery_stage = {
     type: jsPsychImageKeyboardResponse,
@@ -105,7 +105,6 @@ function finishLineJudgment(data) {
         : data.rt_from_lines <= minResponseTime ? 'too_fast' : 'valid';
     data.correct = data.response_status === 'valid'
         ? Number(jsPsych.pluginAPI.compareKeys(data.response, data.correct_response)) : 0;
-    data.trial_num = data.real_trial_num;
     if (save_data_locally !== 'on') saveData();
 }
 
@@ -125,7 +124,6 @@ const lines_stage = {
     },
     on_finish: function(data) {
         if (data.response !== null) {
-            data.response_stage = 'lines';
             data.rt_from_lines = data.rt;
             finishLineJudgment(data);
         }
@@ -146,7 +144,6 @@ const test_stage = {
             questionOnsetTime = performance.now();
         },
         on_finish: function(data) {
-            data.response_stage = 'question';
             data.rt_from_lines = data.response !== null && data.rt !== null
                 ? questionOnsetTime - linesOnsetTime + data.rt : null;
             data.rt = data.rt_from_lines; // All judgment RTs use line onset.
@@ -157,6 +154,12 @@ const test_stage = {
         return jsPsych.data.getLastTrialData().values()[0].response === null;
     },
 };
+function feedbackTrialData(stage) {
+    const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+    return {...jsPsych.timelineVariable('data'), stage, correct: judgment.correct, response_status: judgment.response_status,
+    };
+}
+
 const too_slow_warning = {
     timeline: [{
         type: jsPsychHtmlKeyboardResponse,
@@ -164,7 +167,7 @@ const too_slow_warning = {
         stimulus: '<div class="task-panel feedback-incorrect">Too slow!<br>Press the space bar to continue.</div>',
         choices: [' '],
         response_ends_trial: true,
-        data: {stage: 'too_slow_warning'},
+        data: () => feedbackTrialData('too_slow_warning'),
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.getLastTrialData().values()[0];
@@ -179,7 +182,7 @@ const too_fast_warning = {
         stimulus: '<div class="task-panel feedback-incorrect">Do not press the key before you see the lines.<br>Press the space bar to continue.</div>',
         choices: [' '],
         response_ends_trial: true,
-        data: {stage: 'too_fast_warning'},
+        data: () => feedbackTrialData('too_fast_warning'),
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
@@ -203,10 +206,7 @@ const response_feedback = {
         },
         choices: 'NO_KEYS',
         trial_duration: feedbackDuration,
-        data: function() {
-            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-            return {stage: 'feedback', correct: judgment.correct, response_status: judgment.response_status, trial_num: judgment.trial_num, real_trial_num: judgment.real_trial_num};
-        },
+        data: () => feedbackTrialData('feedback'),
     }],
     conditional_function: function() {
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
@@ -231,14 +231,8 @@ const rating_stage = {
     },
     on_finish: function(data) {
         data.rating = Number(data.response) + 1;
-        if (data.isPractice === 'practice_imagery') {
-            data.trial_num = 0;
-        } else {
-            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-            data.trial_num = judgment.trial_num;
-        }
         if (data.isPractice === "off") {
-            $("#progressBar").css("width", (data.trial_num / trials.length) * 100 + "%");
+            $("#progressBar").css("width", (data.real_trial_num / trials.length) * 100 + "%");
         }
         if (save_data_locally !== "on") saveData();
     },
