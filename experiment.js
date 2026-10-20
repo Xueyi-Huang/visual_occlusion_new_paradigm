@@ -23,7 +23,6 @@ const occluderColor = squareColor === 'black' ? 'white' : 'black';
 const blockOrder = shuffle([1, 2, 3]); // 1 = middle, 2 = top, 3 = behind. Randomize the order of the three imagery conditions.
 const firstBlockCondition = blockOrder[0];
 const practiceImageryPosition = conditionPositions[firstBlockCondition];
-initializeTaskInstructions();
 let study_id = jsPsych.data.getURLVariable('STUDY_ID');
 let session_id = jsPsych.data.getURLVariable('SESSION_ID');
 let windowHeight = window.innerHeight;
@@ -36,6 +35,7 @@ let browserVersion = browserInfo[1];
 
 jsPsych.data.addProperties({
     subject_id: subject_id,
+    online,
     block_order: blockOrder.join('-'),
     square_color: squareColor,
     occluder_color: occluderColor,
@@ -63,179 +63,8 @@ let practice;
 let blockNum;
 const maxBlockNum = 3;
 
-// /* preload images */
-let preloadImages = {
-    type: jsPsychPreload,
-    images: [gridStimulus(), ...linePairs.map(lineLengths => gridStimulus(lineLengths))],
-};
-timeline.push(preloadImages);
-
-// Responses are accepted from line onset; show the question only if still unanswered.
-const iti = {
-    type: jsPsychHtmlKeyboardResponse,
-    css_classes: ['trial-frame'],
-    stimulus: '<div class="task-panel"></div>',
-    choices: 'NO_KEYS',
-    trial_duration: itiDuration,
-    data: () => ({...jsPsych.timelineVariable('data'), stage: 'iti'}),
-};
-
-const fixation = {
-    type: jsPsychHtmlKeyboardResponse,
-    css_classes: ['trial-frame'],
-    stimulus: '<div class="task-panel fixation-text">+</div>',
-    choices: "NO_KEYS",
-    trial_duration: fixationDuration,
-    data: () => ({...jsPsych.timelineVariable('data'), stage: 'fixation'}),
-};
-const imagery_stage = {
-    type: jsPsychImageKeyboardResponse,
-    render_on_canvas: false, // Keep the SVG sharp on high-density displays.
-    css_classes: ['trial-frame'],
-    stimulus: gridStimulus(),
-    choices: "NO_KEYS",
-    prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-        ? '' : `<p>${jsPsych.timelineVariable('imagery_cue')}</p>`,
-    trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
-    data: () => ({...jsPsych.timelineVariable('data'), stage: 'imagery'}),
-};
-function finishLineJudgment(data) {
-    data.stage = 'judgment';
-    data.response_status = data.response === null ? 'too_slow'
-        : data.rt_from_lines <= minResponseTime ? 'too_fast' : 'valid';
-    data.correct = data.response_status === 'valid'
-        ? Number(jsPsych.pluginAPI.compareKeys(data.response, data.correct_response)) : 0;
-    if (save_data_locally !== 'on') saveData();
-}
-
-const lines_stage = {
-    type: jsPsychImageKeyboardResponse,
-    render_on_canvas: false,
-    css_classes: ['trial-frame'],
-    stimulus: jsPsych.timelineVariable('stimulus'),
-    prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-        ? '' : '<p>Compare the two green lines</p>',
-    choices: [keySame, keyDifferent],
-    response_ends_trial: true,
-    trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
-    data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
-    on_load: function() {
-        linesOnsetTime = performance.now();
-    },
-    on_finish: function(data) {
-        if (data.response !== null) {
-            data.rt_from_lines = data.rt;
-            finishLineJudgment(data);
-        }
-    },
-};
-const test_stage = {
-    timeline: [{
-        type: jsPsychHtmlKeyboardResponse,
-        css_classes: ['trial-frame'],
-        stimulus: '<div class="task-panel">Same or Different?</div>',
-        choices: [keySame, keyDifferent],
-        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-            ? '' : '<p>S = Same, D = Different</p>',
-        trial_duration: () => jsPsych.timelineVariable('response_duration'),
-        response_ends_trial: true,
-        data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
-        on_load: function() {
-            questionOnsetTime = performance.now();
-        },
-        on_finish: function(data) {
-            data.rt_from_lines = data.response !== null && data.rt !== null
-                ? questionOnsetTime - linesOnsetTime + data.rt : null;
-            data.rt = data.rt_from_lines; // All judgment RTs use line onset.
-            finishLineJudgment(data);
-        },
-    }],
-    conditional_function: function() {
-        return jsPsych.data.getLastTrialData().values()[0].response === null;
-    },
-};
-function feedbackTrialData(stage) {
-    const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-    return {...jsPsych.timelineVariable('data'), stage, correct: judgment.correct, response_status: judgment.response_status,
-    };
-}
-
-const too_slow_warning = {
-    timeline: [{
-        type: jsPsychHtmlKeyboardResponse,
-        css_classes: ['trial-frame'],
-        stimulus: '<div class="task-panel feedback-incorrect">Too slow!<br>Press the space bar to continue.</div>',
-        choices: [' '],
-        response_ends_trial: true,
-        data: () => feedbackTrialData('too_slow_warning'),
-    }],
-    conditional_function: function() {
-        const judgment = jsPsych.data.getLastTrialData().values()[0];
-        return judgment.response_status === 'too_slow';
-    },
-};
-const too_fast_warning = {
-    timeline: [{
-        type: jsPsychHtmlKeyboardResponse,
-        css_classes: ['trial-frame'],
-        stimulus: '<div class="task-panel feedback-incorrect">Do not press the key before you see the lines.<br>Press the space bar to continue.</div>',
-        choices: [' '],
-        response_ends_trial: true,
-        data: () => feedbackTrialData('too_fast_warning'),
-    }],
-    conditional_function: function() {
-        const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-        return judgment.response_status === 'too_fast';
-    },
-};
-const break_pause = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: '<div></div>',
-    choices: 'NO_KEYS',
-    trial_duration: 750,
-    data: {stage: 'break_pause'},
-};
-const response_feedback = {
-    timeline: [{
-        type: jsPsychHtmlKeyboardResponse,
-        css_classes: ['trial-frame'],
-        stimulus: function() {
-            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-            return `<div class="task-panel ${judgment.correct ? 'feedback-correct' : 'feedback-incorrect'}">${judgment.correct ? 'Correct!' : 'Incorrect'}</div>`;
-        },
-        choices: 'NO_KEYS',
-        trial_duration: feedbackDuration,
-        data: () => feedbackTrialData('feedback'),
-    }],
-    conditional_function: function() {
-        const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-        return judgment.response_status === 'valid';
-    },
-};
-const rating_stage = {
-    type: jsPsychHtmlButtonResponse,
-    css_classes: ['trial-frame'],
-    choices: ["1", "2", "3", "4", "5"],
-    stimulus: '<div class="task-panel rating-panel">How vivid?</div>',
-    prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-        ? '' : '<p>1 (Not vivid at all) - 5 (Perfectly vivid)</p>',
-    data: () => ({...jsPsych.timelineVariable('data'), stage: 'vividness'}),
-    on_start: function() {
-        document.documentElement.style.cursor = 'default';
-    },
-    on_load: function() {
-        const panel = document.querySelector('.rating-panel');
-        const buttons = document.getElementById('jspsych-html-button-response-btngroup');
-        panel.appendChild(buttons);
-    },
-    on_finish: function(data) {
-        data.rating = Number(data.response) + 1;
-        if (data.isPractice === "off") {
-            $("#progressBar").css("width", (data.real_trial_num / trials.length) * 100 + "%");
-        }
-        if (save_data_locally !== "on") saveData();
-    },
-};
+let practice_trials_1, practice_trials_2, practice_trials_3;
+let practice_trials_block_2, practice_trials_block_3;
 
 // Start experiment with fullscreen.
 let fullscreen_on = {
@@ -249,9 +78,9 @@ let fullscreen_on = {
             jsPsych.data.addProperties({frame_duration});
             console.log("Estimated frame duration: ", frame_rate);
         }, 5000, true);
-        $("#progressbar").hide();
+        $('#progressContainer').hide();
     },
-    delay_after: 5000
+    post_trial_gap: 5000,
 };
 timeline.push(fullscreen_on);
 
@@ -278,307 +107,495 @@ let frame_duration_exclusion = {
         });
     }
 };
-if (jump_to_questionnaire != "on") {
-    timeline.push(frame_duration_exclusion);
+timeline.push(frame_duration_exclusion);
+
+if (online === 'on') {
+    timeline.push(createScreenCalibration(jsPsych));
 }
-
-
-// VVIQ: four scenes with four required ratings each.
-const vviqPages = vviqQuestions.map((questions, pageIndex) => ({
-    type: jsPsychSurveyMultiChoice,
-    css_classes: ['vviq-page'],
-    preamble: `<div class="vviq_preamble"><p>${vviqItems[pageIndex]}</p><p>Rate the vividness of each detail.</p></div>`,
-    questions: questions.map((prompt, itemIndex) => ({
-        prompt,
-        name: `vviq${pageIndex * 4 + itemIndex + 1}`,
-        options: vviqOptions,
-        required: true,
-    })),
-    data: {stage: 'vviq', vviq_page: pageIndex + 1},
-    button_label: 'Continue',
-    on_finish: function(data) {
-        questions.forEach((_, itemIndex) => {
-            const name = `vviq${pageIndex * 4 + itemIndex + 1}`;
-            data.response[name] = vviqScores[vviqOptions.indexOf(data.response[name])];
-        });
-        saveQuestionnaire(data);
+timeline.push({
+    type: jsPsychCallFunction,
+    func: function() {
+        jsPsych.addNodeToEndOfTimeline({timeline: buildExperimentTimeline()});
     },
-}));
-if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
-    timeline.push({
-        type: jsPsychInstructions,
-        pages: initial_instruction_pages(),
-        show_clickable_nav: true,
-        data: {stage: 'vviq_instructions'},
+    data: {stage: 'prepare_trials'},
+});
+
+// Construct images, instructions, and trials only after online calibration.
+function buildExperimentTimeline() {
+    const taskTimeline = [];
+    initializeTaskInstructions();
+    // /* preload images */
+    let preloadImages = {
+        type: jsPsychPreload,
+        images: [gridStimulus(), ...linePairs.map(lineLengths => gridStimulus(lineLengths))],
+    };
+    taskTimeline.push(preloadImages);
+
+    // Responses are accepted from line onset; show the question only if still unanswered.
+    const iti = {
+        type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['trial-frame'],
+        stimulus: '<div class="task-panel"></div>',
+        choices: 'NO_KEYS',
+        trial_duration: itiDuration,
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'iti'}),
+    };
+
+    const fixation = {
+        type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['trial-frame'],
+        stimulus: '<div class="task-panel fixation-text">+</div>',
+        choices: "NO_KEYS",
+        trial_duration: fixationDuration,
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'fixation'}),
+    };
+    const imagery_stage = {
+        type: jsPsychImageKeyboardResponse,
+        render_on_canvas: false, // Keep the SVG sharp on high-density displays.
+        css_classes: ['trial-frame'],
+        stimulus: gridStimulus(),
+        choices: "NO_KEYS",
+        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+            ? '' : `<p>${jsPsych.timelineVariable('imagery_cue')}</p>`,
+        trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'imagery'}),
+    };
+    function finishLineJudgment(data) {
+        data.stage = 'judgment';
+        data.response_status = data.response === null ? 'too_slow'
+            : data.rt_from_lines <= minResponseTime ? 'too_fast' : 'valid';
+        data.correct = data.response_status === 'valid'
+            ? Number(jsPsych.pluginAPI.compareKeys(data.response, data.correct_response)) : 0;
+        if (save_data_locally !== 'on') saveData();
+    }
+
+    const lines_stage = {
+        type: jsPsychImageKeyboardResponse,
+        render_on_canvas: false,
+        css_classes: ['trial-frame'],
+        stimulus: () => jsPsych.timelineVariable('stimulus'),
+        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+            ? '' : '<p>Compare the two green lines</p>',
+        choices: [keySame, keyDifferent],
+        response_ends_trial: true,
+        trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
+        on_load: function() {
+            linesOnsetTime = performance.now();
+        },
+        on_finish: function(data) {
+            if (data.response !== null) {
+                data.rt_from_lines = data.rt;
+                finishLineJudgment(data);
+            }
+        },
+    };
+    const test_stage = {
+        timeline: [{
+            type: jsPsychHtmlKeyboardResponse,
+            css_classes: ['trial-frame'],
+            stimulus: '<div class="task-panel">Same or Different?</div>',
+            choices: [keySame, keyDifferent],
+            prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+                ? '' : '<p>S = Same, D = Different</p>',
+            trial_duration: () => jsPsych.timelineVariable('response_duration'),
+            response_ends_trial: true,
+            data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
+            on_load: function() {
+                questionOnsetTime = performance.now();
+            },
+            on_finish: function(data) {
+                data.rt_from_lines = data.response !== null && data.rt !== null
+                    ? questionOnsetTime - linesOnsetTime + data.rt : null;
+                data.rt = data.rt_from_lines; // All judgment RTs use line onset.
+                finishLineJudgment(data);
+            },
+        }],
+        conditional_function: function() {
+            return jsPsych.data.getLastTrialData().values()[0].response === null;
+        },
+    };
+    function feedbackTrialData(stage) {
+        const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+        return {...jsPsych.timelineVariable('data'), stage, correct: judgment.correct, response_status: judgment.response_status,
+        };
+    }
+
+    const too_slow_warning = {
+        timeline: [{
+            type: jsPsychHtmlKeyboardResponse,
+            css_classes: ['trial-frame'],
+            stimulus: '<div class="task-panel feedback-incorrect">Too slow!<br>Press the space bar to continue.</div>',
+            choices: [' '],
+            response_ends_trial: true,
+            data: () => feedbackTrialData('too_slow_warning'),
+        }],
+        conditional_function: function() {
+            const judgment = jsPsych.data.getLastTrialData().values()[0];
+            return judgment.response_status === 'too_slow';
+        },
+    };
+    const too_fast_warning = {
+        timeline: [{
+            type: jsPsychHtmlKeyboardResponse,
+            css_classes: ['trial-frame'],
+            stimulus: '<div class="task-panel feedback-incorrect">Do not press the key before you see the lines.<br>Press the space bar to continue.</div>',
+            choices: [' '],
+            response_ends_trial: true,
+            data: () => feedbackTrialData('too_fast_warning'),
+        }],
+        conditional_function: function() {
+            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+            return judgment.response_status === 'too_fast';
+        },
+    };
+    const break_pause = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div></div>',
+        choices: 'NO_KEYS',
+        trial_duration: 750,
+        data: {stage: 'break_pause'},
+    };
+    const response_feedback = {
+        timeline: [{
+            type: jsPsychHtmlKeyboardResponse,
+            css_classes: ['trial-frame'],
+            stimulus: function() {
+                const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+                return `<div class="task-panel ${judgment.correct ? 'feedback-correct' : 'feedback-incorrect'}">${judgment.correct ? 'Correct!' : 'Incorrect'}</div>`;
+            },
+            choices: 'NO_KEYS',
+            trial_duration: feedbackDuration,
+            data: () => feedbackTrialData('feedback'),
+        }],
+        conditional_function: function() {
+            const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
+            return judgment.response_status === 'valid';
+        },
+    };
+    const rating_stage = {
+        type: jsPsychHtmlButtonResponse,
+        css_classes: ['trial-frame'],
+        choices: ["1", "2", "3", "4", "5"],
+        stimulus: '<div class="task-panel rating-panel">How vivid?</div>',
+        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
+            ? '' : '<p>1 (Not vivid at all) - 5 (Perfectly vivid)</p>',
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'vividness'}),
         on_start: function() {
             document.documentElement.style.cursor = 'default';
-            $('#progressContainer').hide();
         },
-    });
-    timeline.push(...(review_mode === 'on' ? vviqPages.slice(0, 1) : vviqPages));
-}
+        on_load: function() {
+            const panel = document.querySelector('.rating-panel');
+            const buttons = document.getElementById('jspsych-html-button-response-btngroup');
+            panel.appendChild(buttons);
+        },
+        on_finish: function(data) {
+            data.rating = Number(data.response) + 1;
+            if (data.isPractice === "off") {
+                $("#progressBar").css("width", (data.real_trial_num / trials.length) * 100 + "%");
+            }
+            if (save_data_locally !== "on") saveData();
+        },
+    };
 
-// Practice round 1: line judgments only.
-const practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_lines', pair, 0, 'none'));
-const practice_round_1 = {
-    timeline: [iti, fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
-    timeline_variables: practice_trials_1,
-    randomize_order: true,
-    data: {isPractice: 'practice_lines'},
-};
-if (jump_to_questionnaire !== 'on') {
-    timeline.push({
-        type: jsPsychInstructions,
-        pages: line_practice_pages,
-        show_clickable_nav: true,
-        data: {stage: 'instructions', isPractice: 'practice_lines'},
-    });
-    timeline.push(practice_round_1);
-}
-
-// Practice round 2: imagery and vividness ratings only.
-const practice_trials_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_imagery', pair, 1, practiceImageryPosition));
-const practice_round_2 = {
-    timeline: [iti, fixation, imagery_stage, rating_stage],
-    timeline_variables: practice_trials_2,
-    randomize_order: true,
-    data: {isPractice: 'practice_imagery'},
-};
-if (jump_to_questionnaire !== 'on') {
-    timeline.push({
-        type: jsPsychInstructions,
-        pages: imagery_practice_pages,
-        show_clickable_nav: true,
-        data: {stage: 'instructions', isPractice: 'practice_imagery'},
-    });
-    timeline.push(practice_round_2);
-}
-
-// Practice round 3: combine imagery, line judgments, and vividness ratings.
-const practice_trials_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block_1', pair, 1, practiceImageryPosition));
-const practice_round_3 = {
-    timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-    timeline_variables: practice_trials_3,
-    randomize_order: true,
-    data: {isPractice: 'practice_block_1'},
-};
-if (jump_to_questionnaire !== 'on') {
-    timeline.push({
-        type: jsPsychInstructions,
-        pages: full_practice_pages,
-        show_clickable_nav: true,
-        data: {stage: 'instructions', isPractice: 'practice_block_1'},
-    });
-    timeline.push(practice_round_3);
-}
-
-// Generate each block separately so trial order never mixes imagery conditions.
-practice = 'off';
-
-const blocks = [];
-for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
-    const condition = blockOrder[blockNum - 1];
-    const blockTrials = [];
-    for (let repetition = 0; repetition < repeatTimes; repetition++) {
-        for (const lineLengths of linePairs) {
-            const position = conditionPositions[condition];
-            blockTrials.push(generate_trial(practice, lineLengths, blockNum, position));
-        }
-    }
-    shuffle(blockTrials);
-    if (review_mode === 'on') {
-        blockTrials.splice(2);
-    }
-    blockTrials.forEach(trial => {
-        trial.data.real_trial_num = real_trial_num++;
-    });
-    blocks.push(blockTrials);
-}
-[block1, block2, block3] = blocks;
-trials = blocks.flat();
-
-// Full-task refreshers for the second and third blocks.
-const practice_trials_block_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block_2', pair, 2, conditionPositions[blockOrder[1]]));
-const practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-    .map(pair => generate_trial('practice_block_3', pair, 3, conditionPositions[blockOrder[2]]));
-
-// Real trials: identical response sequence, with block-specific imagery cues.
-for (let index = 0; index < blockOrder.length; index++) {
-    const blockNum = index + 1;
-    const condition = blockOrder[index];
-    const blockTrials = blocks[index];
-    if (jump_to_questionnaire !== 'on') {
-        timeline.push(break_pause);
-        timeline.push({
+    // VVIQ: four scenes with four required ratings each.
+    const vviqPages = vviqQuestions.map((questions, pageIndex) => ({
+        type: jsPsychSurveyMultiChoice,
+        css_classes: ['vviq-page'],
+        preamble: `<div class="vviq_preamble"><p>${vviqItems[pageIndex]}</p><p>Rate the vividness of each detail.</p></div>`,
+        questions: questions.map((prompt, itemIndex) => ({
+            prompt,
+            name: `vviq${pageIndex * 4 + itemIndex + 1}`,
+            options: vviqOptions,
+            required: true,
+        })),
+        data: {stage: 'vviq', vviq_page: pageIndex + 1},
+        button_label: 'Continue',
+        on_finish: function(data) {
+            questions.forEach((_, itemIndex) => {
+                const name = `vviq${pageIndex * 4 + itemIndex + 1}`;
+                data.response[name] = vviqScores[vviqOptions.indexOf(data.response[name])];
+            });
+            saveQuestionnaire(data);
+        },
+    }));
+    if (jump_to_questionnaire !== 'on' && skip_vviq === 'off') {
+        taskTimeline.push({
             type: jsPsychInstructions,
-            pages: blockInstructionPages(condition, blockNum),
+            pages: initial_instruction_pages(),
             show_clickable_nav: true,
-            data: {stage: 'block_instructions', block_num: blockNum},
-            on_start: function() { $('#progressContainer').hide(); },
+            data: {stage: 'vviq_instructions'},
+            on_start: function() {
+                document.documentElement.style.cursor = 'default';
+                $('#progressContainer').hide();
+            },
         });
-        timeline.push(break_pause);
-        if (index > 0) {
-            const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
-            timeline.push(break_pause);
-            timeline.push({
-                timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-                timeline_variables: practiceTrials,
-                randomize_order: true,
-                data: {isPractice: `practice_block_${blockNum}`, block_num: blockNum},
-            });
-            timeline.push(break_pause);
-            timeline.push({
-                type: jsPsychHtmlKeyboardResponse,
-                stimulus: afterBlockPracticeText(blockNum, condition),
-                choices: [' '],
-                data: {stage: 'after_block_practice', block_num: blockNum},
-            });
-            timeline.push(break_pause);
-        }
-        timeline.push(break_pause);
-        timeline.push({
-            timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-            timeline_variables: blockTrials,
-            randomize_order: false,
-            on_timeline_start: function() { $('#progressContainer').show(); },
-            data: {isPractice: 'off', block_num: blockNum},
-        });
+        taskTimeline.push(...(review_mode === 'on' ? vviqPages.slice(0, 1) : vviqPages));
     }
-}
 
-function generate_trial(practice, lineLengths, blockNum, position) {
-    const isSame = lineLengths[0] === lineLengths[1];
-    const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
-    const responseDuration = practice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(practice) ? maxResponseTime : null;
-    const imaginationDuration = practice !== 'off' ? imageryDurationPractice : imageryDuration;
-    const imageryCues = {
-        none: '',
-        middle: `Imagine a ${occluderColor} vertical bar in the MIDDLE`,
-        top: `Imagine a ${occluderColor} horizontal bar at the TOP`,
-        behind: `Imagine a ${occluderColor} horizontal bar BEHIND the squares`,
+    // Practice round 1: line judgments only.
+    practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+        .map(pair => generate_trial('practice_lines', pair, 0, 'none'));
+    const practice_round_1 = {
+        timeline: [iti, fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
+        timeline_variables: practice_trials_1,
+        randomize_order: true,
+        data: {isPractice: 'practice_lines'},
     };
-    return {
-        stimulus: gridStimulus(lineLengths),
-        imagery_cue: imageryCues[position],
-        presentation_duration: presentationDuration,
-        response_duration: responseDuration,
-        imagery_duration: imaginationDuration,
-        data: {
-            isPractice: practice,
-            real_trial_num: 0,
-            left_line_length_px: lineLengths[0],
-            right_line_length_px: lineLengths[1],
-            correct_response: isSame ? keySame : keyDifferent,
-            block_num: blockNum,
-            condition: practice === 'practice_lines' ? 'none' : position,
+    if (jump_to_questionnaire !== 'on') {
+        taskTimeline.push({
+            type: jsPsychInstructions,
+            pages: line_practice_pages,
+            show_clickable_nav: true,
+            data: {stage: 'instructions', isPractice: 'practice_lines'},
+        });
+        taskTimeline.push(practice_round_1);
+    }
+
+    // Practice round 2: imagery and vividness ratings only.
+    practice_trials_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+        .map(pair => generate_trial('practice_imagery', pair, 1, practiceImageryPosition));
+    const practice_round_2 = {
+        timeline: [iti, fixation, imagery_stage, rating_stage],
+        timeline_variables: practice_trials_2,
+        randomize_order: true,
+        data: {isPractice: 'practice_imagery'},
+    };
+    if (jump_to_questionnaire !== 'on') {
+        taskTimeline.push({
+            type: jsPsychInstructions,
+            pages: imagery_practice_pages,
+            show_clickable_nav: true,
+            data: {stage: 'instructions', isPractice: 'practice_imagery'},
+        });
+        taskTimeline.push(practice_round_2);
+    }
+
+    // Practice round 3: combine imagery, line judgments, and vividness ratings.
+    practice_trials_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+        .map(pair => generate_trial('practice_block_1', pair, 1, practiceImageryPosition));
+    const practice_round_3 = {
+        timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+        timeline_variables: practice_trials_3,
+        randomize_order: true,
+        data: {isPractice: 'practice_block_1'},
+    };
+    if (jump_to_questionnaire !== 'on') {
+        taskTimeline.push({
+            type: jsPsychInstructions,
+            pages: full_practice_pages,
+            show_clickable_nav: true,
+            data: {stage: 'instructions', isPractice: 'practice_block_1'},
+        });
+        taskTimeline.push(practice_round_3);
+    }
+
+    // Generate each block separately so trial order never mixes imagery conditions.
+    practice = 'off';
+
+    const blocks = [];
+    for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
+        const condition = blockOrder[blockNum - 1];
+        const blockTrials = [];
+        for (let repetition = 0; repetition < repeatTimes; repetition++) {
+            for (const lineLengths of linePairs) {
+                const position = conditionPositions[condition];
+                blockTrials.push(generate_trial(practice, lineLengths, blockNum, position));
+            }
+        }
+        shuffle(blockTrials);
+        if (review_mode === 'on') {
+            blockTrials.splice(2);
+        }
+        blockTrials.forEach(trial => {
+            trial.data.real_trial_num = real_trial_num++;
+        });
+        blocks.push(blockTrials);
+    }
+    [block1, block2, block3] = blocks;
+    trials = blocks.flat();
+
+    // Full-task refreshers for the second and third blocks.
+    practice_trials_block_2 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+        .map(pair => generate_trial('practice_block_2', pair, 2, conditionPositions[blockOrder[1]]));
+    practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
+        .map(pair => generate_trial('practice_block_3', pair, 3, conditionPositions[blockOrder[2]]));
+
+    // Real trials: identical response sequence, with block-specific imagery cues.
+    for (let index = 0; index < blockOrder.length; index++) {
+        const blockNum = index + 1;
+        const condition = blockOrder[index];
+        const blockTrials = blocks[index];
+        if (jump_to_questionnaire !== 'on') {
+            taskTimeline.push(break_pause);
+            taskTimeline.push({
+                type: jsPsychInstructions,
+                pages: blockInstructionPages(condition, blockNum),
+                show_clickable_nav: true,
+                data: {stage: 'block_instructions', block_num: blockNum},
+                on_start: function() { $('#progressContainer').hide(); },
+            });
+            taskTimeline.push(break_pause);
+            if (index > 0) {
+                const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
+                taskTimeline.push(break_pause);
+                taskTimeline.push({
+                    timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+                    timeline_variables: practiceTrials,
+                    randomize_order: true,
+                    data: {isPractice: `practice_block_${blockNum}`, block_num: blockNum},
+                });
+                taskTimeline.push(break_pause);
+                taskTimeline.push({
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: afterBlockPracticeText(blockNum, condition),
+                    choices: [' '],
+                    data: {stage: 'after_block_practice', block_num: blockNum},
+                });
+                taskTimeline.push(break_pause);
+            }
+            taskTimeline.push(break_pause);
+            taskTimeline.push({
+                timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+                timeline_variables: blockTrials,
+                randomize_order: false,
+                on_timeline_start: function() { $('#progressContainer').show(); },
+                data: {isPractice: 'off', block_num: blockNum},
+            });
+        }
+    }
+
+    function generate_trial(practice, lineLengths, blockNum, position) {
+        const isSame = lineLengths[0] === lineLengths[1];
+        const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
+        const responseDuration = practice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(practice) ? maxResponseTime : null;
+        const imaginationDuration = practice !== 'off' ? imageryDurationPractice : imageryDuration;
+        const imageryCues = {
+            none: '',
+            middle: `Imagine a ${occluderColor} vertical bar in the MIDDLE`,
+            top: `Imagine a ${occluderColor} horizontal bar at the TOP`,
+            behind: `Imagine a ${occluderColor} horizontal bar BEHIND the squares`,
+        };
+        return {
+            stimulus: gridStimulus(lineLengths),
+            imagery_cue: imageryCues[position],
+            presentation_duration: presentationDuration,
+            response_duration: responseDuration,
+            imagery_duration: imaginationDuration,
+            data: {
+                isPractice: practice,
+                real_trial_num: 0,
+                left_line_length_px: lineLengths[0],
+                right_line_length_px: lineLengths[1],
+                correct_response: isSame ? keySame : keyDifferent,
+                block_num: blockNum,
+                condition: practice === 'practice_lines' ? 'none' : position,
+            },
+        };
+    }
+
+    let thank_you = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: thank_you_text,
+        choices: [" "],
+        on_start: function() {
+            $("#progressContainer").hide();
+            document.documentElement.style.cursor = 'default';
+        }
+    };
+    taskTimeline.push(thank_you);
+
+    // Keep questionnaire answers in a single JSON response column.
+    function saveQuestionnaire(data) {
+        if (data.response !== null && typeof data.response === 'object') {
+            data.response = JSON.stringify(data.response);
+        }
+        if (save_data_locally !== 'on') saveData();
+    }
+
+    const projectorQuestion = {
+        css_classes: ['questionnaire-page'],
+        type: jsPsychSurveyMultiChoice,
+        preamble: 'Please tell us about your mental imagery experience.',
+        questions: [{
+            prompt: 'Was your imagery more like a projection on a screen or more like something inside your head?',
+            name: 'projector_type',
+            options: ['a projection on a screen', 'something inside my head', 'both', 'neither'],
+            required: true,
+        }],
+        data: {stage: 'imagery_experience'},
+        button_label: 'Continue',
+        on_finish: function(data) {
+            saveQuestionnaire(data);
         },
     };
+    taskTimeline.push(projectorQuestion);
+
+    const study_questionnaire = {
+        css_classes: ['questionnaire-page'],
+        type: jsPsychSurveyText,
+        preamble: '<strong>Tell us more about your thoughts on the study.</strong>',
+        questions: [
+            {prompt: '1. Did you use any particular strategy when imagining the bar or comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
+            {prompt: '2. How did you feel about the time provided for imagining the bar and viewing the lines?', name: 'timing', rows: 3, columns: 90, required: true},
+            {prompt: '3. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
+            {prompt: '4. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
+        ],
+        data: {stage: 'study_questionnaire'},
+        on_finish: saveQuestionnaire,
+    };
+    taskTimeline.push(study_questionnaire);
+
+    const demographics = {
+        css_classes: ['questionnaire-page'],
+        type: jsPsychSurveyHtmlForm,
+        html: demographics_html,
+        button_label: 'Continue',
+        data: {stage: 'demographics'},
+        on_finish: saveQuestionnaire,
+    };
+    taskTimeline.push(demographics);
+
+    const finalQuestionsPage = {
+        css_classes: ['questionnaire-page'],
+        type: jsPsychSurveyMultiChoice,
+        preamble: 'Your answers to these questions will not affect your reward. Please answer honestly.',
+        questions: finalQuestions.map((prompt, index) => ({
+            prompt,
+            name: `final_q_${index + 1}`,
+            options: index === 0 ? finalOptions : percentageOptions,
+            required: true,
+        })),
+        data: {stage: 'final_questions'},
+        button_label: 'Continue',
+        on_finish: function(data) {
+            finalQuestions.forEach((_, index) => {
+                const options = index === 0 ? finalOptions : percentageOptions;
+                const name = `final_q_${index + 1}`;
+                data.response[name] = options.indexOf(data.response[name]) + 1;
+            });
+            saveQuestionnaire(data);
+        },
+    };
+    taskTimeline.push(finalQuestionsPage);
+
+    const bufferPage = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: buffer_text,
+        choices: ['Submit'],
+        data: {stage: 'submission'},
+        on_load: function() {
+            const button = document.querySelector('#jspsych-html-button-response-btngroup button');
+            button.disabled = true;
+            jsPsych.pluginAPI.setTimeout(() => { button.disabled = false; }, 3000);
+        },
+        on_finish: function() {
+            if (save_data_locally !== 'on') saveData();
+        },
+    };
+    taskTimeline.push(bufferPage);
+    return taskTimeline;
 }
-
-let thank_you = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: thank_you_text,
-    choices: [" "],
-    on_start: function() {
-        $("#progressContainer").hide();
-        document.documentElement.style.cursor = 'default';
-    }
-};
-timeline.push(thank_you);
-
-// Keep questionnaire answers in a single JSON response column.
-function saveQuestionnaire(data) {
-    if (data.response !== null && typeof data.response === 'object') {
-        data.response = JSON.stringify(data.response);
-    }
-    if (save_data_locally !== 'on') saveData();
-}
-
-const projectorQuestion = {
-    css_classes: ['questionnaire-page'],
-    type: jsPsychSurveyMultiChoice,
-    preamble: 'Please tell us about your mental imagery experience.',
-    questions: [{
-        prompt: 'Was your imagery more like a projection on a screen or more like something inside your head?',
-        name: 'projector_type',
-        options: ['a projection on a screen', 'something inside my head', 'both', 'neither'],
-        required: true,
-    }],
-    data: {stage: 'imagery_experience'},
-    button_label: 'Continue',
-    on_finish: function(data) {
-        saveQuestionnaire(data);
-    },
-};
-timeline.push(projectorQuestion);
-
-const study_questionnaire = {
-    css_classes: ['questionnaire-page'],
-    type: jsPsychSurveyText,
-    preamble: '<strong>Tell us more about your thoughts on the study.</strong>',
-    questions: [
-        {prompt: '1. Did you use any particular strategy when imagining the bar or comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
-        {prompt: '2. How did you feel about the time provided for imagining the bar and viewing the lines?', name: 'timing', rows: 3, columns: 90, required: true},
-        {prompt: '3. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
-        {prompt: '4. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
-    ],
-    data: {stage: 'study_questionnaire'},
-    on_finish: saveQuestionnaire,
-};
-timeline.push(study_questionnaire);
-
-const demographics = {
-    css_classes: ['questionnaire-page'],
-    type: jsPsychSurveyHtmlForm,
-    html: demographics_html,
-    button_label: 'Continue',
-    data: {stage: 'demographics'},
-    on_finish: saveQuestionnaire,
-};
-timeline.push(demographics);
-
-const finalQuestionsPage = {
-    css_classes: ['questionnaire-page'],
-    type: jsPsychSurveyMultiChoice,
-    preamble: 'Your answers to these questions will not affect your reward. Please answer honestly.',
-    questions: finalQuestions.map((prompt, index) => ({
-        prompt,
-        name: `final_q_${index + 1}`,
-        options: index === 0 ? finalOptions : percentageOptions,
-        required: true,
-    })),
-    data: {stage: 'final_questions'},
-    button_label: 'Continue',
-    on_finish: function(data) {
-        finalQuestions.forEach((_, index) => {
-            const options = index === 0 ? finalOptions : percentageOptions;
-            const name = `final_q_${index + 1}`;
-            data.response[name] = options.indexOf(data.response[name]) + 1;
-        });
-        saveQuestionnaire(data);
-    },
-};
-timeline.push(finalQuestionsPage);
-
-const bufferPage = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: buffer_text,
-    choices: ['Submit'],
-    data: {stage: 'submission'},
-    on_load: function() {
-        const button = document.querySelector('#jspsych-html-button-response-btngroup button');
-        button.disabled = true;
-        jsPsych.pluginAPI.setTimeout(() => { button.disabled = false; }, 3000);
-    },
-    on_finish: function() {
-        if (save_data_locally !== 'on') saveData();
-    },
-};
-timeline.push(bufferPage);
 
 // Function to save data after each trial
 function saveData(done) {

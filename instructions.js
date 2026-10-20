@@ -249,3 +249,16 @@ function blockInstructionPages(conditionId, blockNum) {
         instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p><p>Go back now if you want to reread anything. If you are ready, click "Next" to start the main trials.</p>`),
     ];
 }
+
+const screen_calibration_text = `<div class="instructions left-aligned">
+    <h2>Match your screen to a card</h2>
+    <p>We do this to keep the visual display the same physical size for all participants.</p>
+    <p>Use a standard bank card (85.6 × 53.98 mm, or 3.375 × 2.125 in). Hold it against your screen and move the slider until the rectangle's <strong>outside edges match the card</strong>.</p>
+    <p>After matching, put the card away and sit about <strong>${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) from the screen. Keep this distance throughout the task, and do not change browser zoom or switch screens.</p>
+    <div id="calibration-card" style="width:320px;aspect-ratio:85.6 / 53.98;border:2px solid black;box-sizing:border-box;background:white;margin:24px auto;"></div>
+    <label for="card-size-slider">Adjust the rectangle's size:</label>
+    <input id="card-size-slider" type="range" min="120" max="800" step="1" value="320" style="display:block;width:100%;margin:20px 0;">
+    <p><label><input id="calibration-distance" type="checkbox"> I've matched the card and will sit about ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</label></p>
+    <button id="calibration-continue" class="jspsych-btn" disabled>Continue</button>
+    <p id="calibration-message" role="status" aria-live="polite"></p>
+</div>`;

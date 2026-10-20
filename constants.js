@@ -1,3 +1,6 @@
+const online = "off"; // "on": card calibration; "off": fixed lab stimulus sizes.
+const viewingDistanceCm = 60; // Assumed distance after participant instructions.
+
 const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
@@ -32,8 +35,8 @@ function svgDataUrl(svgMarkup) {
 }
 
 // Approximately 3° per cell at 60 cm on a 40 cm-high, 720 CSS-px display.
-const gridCellSize = 57;
-const taskFrameSize = gridCellSize * 5;
+let gridCellSize = 57;
+let taskFrameSize = gridCellSize * 5;
 const taskFrameBorderWidth = 6;
 const taskFrameBorderColor = 'black';
 document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
@@ -46,15 +49,30 @@ function taskFrameOutline() {
     return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
 }
 // Original probe-to-cell proportions: 0.72° / 3° and 0.90° / 3°.
-const shortLine = Math.round(gridCellSize * (0.72 / 3));
-const longLine = Math.round(gridCellSize * (0.90 / 3));
-const linePairs = [
+let shortLine = Math.round(gridCellSize * (0.72 / 3));
+let longLine = Math.round(gridCellSize * (0.90 / 3));
+let linePairs = [
     [shortLine, shortLine],
     [longLine, longLine],
     [shortLine, longLine],
     [longLine, shortLine],
 ];
-const lineWidth = 3;
+let lineWidth = 3;
+let gridLineWidth = 1;
+
+function applyScreenCalibration(pixelsPerCm) {
+    const pixelsForDegrees = degrees => Math.round(
+        2 * viewingDistanceCm * Math.tan(degrees * Math.PI / 360) * pixelsPerCm
+    );
+    gridCellSize = pixelsForDegrees(3);
+    taskFrameSize = gridCellSize * 5;
+    shortLine = pixelsForDegrees(0.72);
+    longLine = pixelsForDegrees(0.90);
+    lineWidth = Math.max(1, pixelsForDegrees(0.08));
+    gridLineWidth = Math.max(1, pixelsForDegrees(0.03));
+    linePairs = [[shortLine, shortLine], [longLine, longLine], [shortLine, longLine], [longLine, shortLine]];
+    document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
+}
 
 function gridStimulus(lineLengths = null) {
     const size = taskFrameSize;
@@ -64,7 +82,7 @@ function gridStimulus(lineLengths = null) {
     }
     for (let i = 1; i < 5; i++) {
         const coordinate = i * gridCellSize;
-        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="1" stroke-dasharray="5 5"/>`;
+        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="${gridLineWidth}" stroke-dasharray="5 5"/>`;
     }
     if (lineLengths) {
         lineLengths.forEach((length, index) => {

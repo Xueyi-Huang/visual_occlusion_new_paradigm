@@ -105,3 +105,61 @@ function getBrowser() {
 
 	return [browser,version];
 }
+
+// Physical screen calibration; no card information or photographs are collected.
+function createScreenCalibration(jsPsych) {
+    return {
+        type: jsPsychHtmlKeyboardResponse,
+        css_classes: ['questionnaire-page'],
+        stimulus: screen_calibration_text,
+        choices: 'NO_KEYS',
+        data: {stage: 'screen_calibration'},
+        on_load: function() {
+            const slider = document.getElementById('card-size-slider');
+            const card = document.getElementById('calibration-card');
+            const confirmation = document.getElementById('calibration-distance');
+            const button = document.getElementById('calibration-continue');
+            const message = document.getElementById('calibration-message');
+            let adjusted = false;
+            slider.max = Math.max(200, Math.min(800, window.innerWidth - 80));
+            slider.value = Math.min(320, Number(slider.max));
+            function update() {
+                card.style.width = `${slider.value}px`;
+                button.disabled = !adjusted || !confirmation.checked;
+                message.textContent = '';
+            }
+            slider.addEventListener('input', function() {
+                adjusted = true;
+                update();
+            });
+            confirmation.addEventListener('change', update);
+            update();
+            button.addEventListener('click', function() {
+                const cardWidthPx = card.getBoundingClientRect().width;
+                const pixelsPerCm = cardWidthPx / 8.56;
+                const cellSize = Math.round(2 * viewingDistanceCm * Math.tan(3 * Math.PI / 360) * pixelsPerCm);
+                const frameSize = cellSize * 5;
+                if (frameSize > Math.min(window.innerWidth - 48, window.innerHeight - 180)) {
+                    message.textContent = 'The task display would not fit this window. Please check the card match and maximize your window, or use a larger screen.';
+                    return;
+                }
+                applyScreenCalibration(pixelsPerCm);
+                const calibration = {
+                    card_width_px: cardWidthPx,
+                    pixels_per_cm: pixelsPerCm,
+                    assumed_viewing_distance_cm: viewingDistanceCm,
+                    grid_cell_px: gridCellSize,
+                    short_line_px: shortLine,
+                    long_line_px: longLine,
+                    line_width_px: lineWidth,
+                    grid_line_width_px: gridLineWidth,
+                };
+                jsPsych.data.addProperties({screen_calibration: JSON.stringify(calibration)});
+                jsPsych.finishTrial({response: JSON.stringify(calibration)});
+            });
+        },
+        on_finish: function() {
+            if (save_data_locally !== 'on') saveData();
+        },
+    };
+}
