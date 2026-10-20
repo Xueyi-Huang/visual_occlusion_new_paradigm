@@ -6,14 +6,14 @@ const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
 
 // Display setup:
 const viewingDistanceCm = 60;
-const labScreenHeightCm = 35; // Height of the lit display area, excluding the bezel.
+const labScreenHeightCm = 35; // No need to calibrate the display if the participant is in the lab, so we can use the known screen height to set the scale.
 const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
     gridCell: 3,
     shortLine: 0.72,
     longLine: 0.90,
     lineWidth: 0.08,
     gridLineWidth: 0.03,
-    frameBorderWidth: 0.32, // Keeps the outer frame prominent
+    frameBorderWidth: 0.32,
 };
 
 // Experiment design parameters.
@@ -38,64 +38,14 @@ let debriefURL = "consent_and_debriefing/debriefing.html" + '?' + splitURL;
 const keySame = 'S';
 const keyDifferent = 'D';
 
-function svgDataUrl(svgMarkup) {
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
-}
-
 // All geometry comes from one physical scale, for both lab and online runs.
 let gridCellSize, taskFrameSize, taskFrameBorderWidth;
+let displayPixelsPerCm;
 let shortLine, longLine, linePairs, lineWidth, gridLineWidth;
 const taskFrameBorderColor = 'black';
 
-function applyScreenCalibration(pixelsPerCm) {
-    if (!Number.isFinite(pixelsPerCm) || pixelsPerCm <= 0 || viewingDistanceCm <= 0) {
-        throw new Error('Display dimensions and viewing distance must be positive numbers.');
-    }
-    const pixelsForDegrees = degrees => Math.max(1, Math.round(
-        2 * viewingDistanceCm * Math.tan(degrees * Math.PI / 360) * pixelsPerCm
-    ));
-    gridCellSize = pixelsForDegrees(stimulusAngles.gridCell);
-    taskFrameSize = gridCellSize * 5;
-    shortLine = pixelsForDegrees(stimulusAngles.shortLine);
-    longLine = pixelsForDegrees(stimulusAngles.longLine);
-    lineWidth = pixelsForDegrees(stimulusAngles.lineWidth);
-    gridLineWidth = 1; // Keep the original subtle dashed grid at every display scale.
-    taskFrameBorderWidth = pixelsForDegrees(stimulusAngles.frameBorderWidth);
-    linePairs = [[shortLine, shortLine], [longLine, longLine], [shortLine, longLine], [longLine, shortLine]];
-    document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
-    document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
-    document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
-}
-
 // Online calibration replaces this initial scale before the task is built.
 applyScreenCalibration(screen.height / labScreenHeightCm);
-
-function taskFrameOutline() {
-    const inset = taskFrameBorderWidth / 2;
-    const extent = taskFrameSize - taskFrameBorderWidth;
-    return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
-}
-
-function gridStimulus(lineLengths = null) {
-    const size = taskFrameSize;
-    let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="lightgray"/>`;
-    for (const column of [1, 3]) {
-        markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="${squareColor}"/>`;
-    }
-    for (let i = 1; i < 5; i++) {
-        const coordinate = i * gridCellSize;
-        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="${gridLineWidth}" stroke-dasharray="5 5"/>`;
-    }
-    if (lineLengths) {
-        lineLengths.forEach((length, index) => {
-            const x = (index === 0 ? 1.5 : 3.5) * gridCellSize;
-            const y = size / 2;
-            markup += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
-        });
-    }
-    return svgDataUrl(markup + taskFrameOutline() + '</svg>');
-}
-
 
 // VVIQ items and scoring, matching the supplied questionnaire.
 const vviqItems = [
@@ -142,7 +92,6 @@ const vviqOptions = [
 
 const vviqScores = [1, 2, 3, 4, 5];
 
-
 // Post-experiment imagery and engagement questions.
 const finalQuestions = [
     "Independently of how you felt in this study, how would you describe your mental imagery in general?",
@@ -157,24 +106,3 @@ const finalOptions = [
     "As vivid as normal vision.",
 ];
 const percentageOptions = ["0%-20%", "20%-40%", "40%-60%", "60%-80%", "80%-100%"];
-
-// Instruction illustration only; the bar is never rendered during trials.
-function occluderIllustration(position = 'middle') {
-    let markup = decodeURIComponent(gridStimulus().split(',')[1]);
-    const cell = gridCellSize;
-    const geometry = {
-        middle: [2 * cell, cell, cell, 3 * cell],
-        top: [cell, cell, 3 * cell, cell],
-        bottom: [cell, 3 * cell, 3 * cell, cell],
-        behind: [0, 2 * cell, 5 * cell, cell],
-    }[position];
-    const [x, y, width, height] = geometry;
-    let bar = `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${occluderColor}"/>`;
-    if (position === 'behind') {
-        // Redraw the squares in front of the imagined bar.
-        for (const column of [1, 3]) {
-            bar += `<rect x="${column * cell}" y="${2 * cell}" width="${cell}" height="${cell}" fill="${squareColor}"/>`;
-        }
-    }
-    return svgDataUrl(markup.replace('</svg>', bar + taskFrameOutline() + '</svg>'));
-}

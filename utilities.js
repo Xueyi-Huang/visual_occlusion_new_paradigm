@@ -145,16 +145,9 @@ function createScreenCalibration(jsPsych) {
                 }
                 applyScreenCalibration(pixelsPerCm);
                 const calibration = {
-                    card_width_px: cardWidthPx,
                     pixels_per_cm: pixelsPerCm,
-                    assumed_viewing_distance_cm: viewingDistanceCm,
-                    grid_cell_px: gridCellSize,
-                    short_line_px: shortLine,
-                    long_line_px: longLine,
-                    line_width_px: lineWidth,
-                    grid_line_width_px: gridLineWidth,
                 };
-                jsPsych.data.addProperties({screen_calibration: JSON.stringify(calibration)});
+                jsPsych.data.addProperties(calibration);
                 jsPsych.finishTrial({response: JSON.stringify(calibration)});
             });
         },
@@ -162,4 +155,76 @@ function createScreenCalibration(jsPsych) {
             if (save_data_locally !== 'on') saveData();
         },
     };
+}
+
+// Stimulus geometry and SVG helpers.
+function svgDataUrl(svgMarkup) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
+}
+
+function applyScreenCalibration(pixelsPerCm) {
+    if (!Number.isFinite(pixelsPerCm) || pixelsPerCm <= 0 || viewingDistanceCm <= 0) {
+        throw new Error('Display dimensions and viewing distance must be positive numbers.');
+    }
+    displayPixelsPerCm = pixelsPerCm;
+    const pixelsForDegrees = degrees => Math.max(1, Math.round(
+        2 * viewingDistanceCm * Math.tan(degrees * Math.PI / 360) * pixelsPerCm
+    ));
+    gridCellSize = pixelsForDegrees(stimulusAngles.gridCell);
+    taskFrameSize = gridCellSize * 5;
+    shortLine = pixelsForDegrees(stimulusAngles.shortLine);
+    longLine = pixelsForDegrees(stimulusAngles.longLine);
+    lineWidth = pixelsForDegrees(stimulusAngles.lineWidth);
+    gridLineWidth = 1; // Keep the original subtle dashed grid at every display scale.
+    taskFrameBorderWidth = pixelsForDegrees(stimulusAngles.frameBorderWidth);
+    linePairs = [[shortLine, shortLine], [longLine, longLine], [shortLine, longLine], [longLine, shortLine]];
+    document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
+    document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
+    document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
+}
+
+function taskFrameOutline() {
+    const inset = taskFrameBorderWidth / 2;
+    const extent = taskFrameSize - taskFrameBorderWidth;
+    return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
+}
+
+function gridStimulus(lineLengths = null) {
+    const size = taskFrameSize;
+    let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="lightgray"/>`;
+    for (const column of [1, 3]) {
+        markup += `<rect x="${column * gridCellSize}" y="${2 * gridCellSize}" width="${gridCellSize}" height="${gridCellSize}" fill="${squareColor}"/>`;
+    }
+    for (let i = 1; i < 5; i++) {
+        const coordinate = i * gridCellSize;
+        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="${gridLineWidth}" stroke-dasharray="5 5"/>`;
+    }
+    if (lineLengths) {
+        lineLengths.forEach((length, index) => {
+            const x = (index === 0 ? 1.5 : 3.5) * gridCellSize;
+            const y = size / 2;
+            markup += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
+        });
+    }
+    return svgDataUrl(markup + taskFrameOutline() + '</svg>');
+}
+
+function occluderIllustration(position = 'middle') {
+    let markup = decodeURIComponent(gridStimulus().split(',')[1]);
+    const cell = gridCellSize;
+    const geometry = {
+        middle: [2 * cell, cell, cell, 3 * cell],
+        top: [cell, cell, 3 * cell, cell],
+        bottom: [cell, 3 * cell, 3 * cell, cell],
+        behind: [0, 2 * cell, 5 * cell, cell],
+    }[position];
+    const [x, y, width, height] = geometry;
+    let bar = `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${occluderColor}"/>`;
+    if (position === 'behind') {
+        // Redraw the squares in front of the imagined bar.
+        for (const column of [1, 3]) {
+            bar += `<rect x="${column * cell}" y="${2 * cell}" width="${cell}" height="${cell}" fill="${squareColor}"/>`;
+        }
+    }
+    return svgDataUrl(markup.replace('</svg>', bar + taskFrameOutline() + '</svg>'));
 }

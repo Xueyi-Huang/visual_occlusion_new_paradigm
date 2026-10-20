@@ -36,6 +36,8 @@ let browserVersion = browserInfo[1];
 jsPsych.data.addProperties({
     subject_id: subject_id,
     online,
+    pixels_per_cm: online === 'on' ? null : displayPixelsPerCm,
+    viewing_distance_cm: viewingDistanceCm,
     block_order: blockOrder.join('-'),
     square_color: squareColor,
     occluder_color: occluderColor,
