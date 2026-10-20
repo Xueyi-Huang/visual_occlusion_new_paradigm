@@ -207,7 +207,7 @@ function afterBlockPracticeText(blockNum, conditionId) {
         <p>${imageryDescription(conditionId)}</p>
         ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
         <p>Keep imagining the bar <strong>as vividly as possible</strong> until the green lines appear.</p>
-        <p>Also, focus on judging the line lengths <strong>accurately</strong>.</p>
+        <p>Also, focus on judging the line lengths <strong>accurately</strong>. However, you won't be told whether your answers are correct.</p>
         <p>Press "Space" when you're ready to start.</p>`);
 }
 
@@ -231,7 +231,7 @@ function blockInstructionPages(conditionId, blockNum) {
             <p>${imageryDescription(conditionId)}</p>
             ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
             <p>Keep imagining the bar <strong>as vividly as possible</strong> until the green lines appear.</p>
-            <p>Focus on judging the line lengths <strong>accurately</strong>.</p>
+            <p>Focus on judging the line lengths <strong>accurately</strong>. However, you won't be told whether your answers are correct.</p>
             <p>Click "Next" when you're ready. Good luck!</p>`)];
     }
     const totalBlocks = Math.max(1, maxBlockNum || 3);

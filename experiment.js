@@ -115,12 +115,12 @@ if (online === 'on') {
 timeline.push({
     type: jsPsychCallFunction,
     func: function() {
-        jsPsych.addNodeToEndOfTimeline({timeline: buildExperimentTimeline()});
+        jsPsych.addNodeToEndOfTimeline({timeline: buildExperimentTimeline()}); // Construct images, instructions, and trials only after online calibration.
     },
     data: {stage: 'prepare_trials'},
 });
 
-// Construct images, instructions, and trials only after online calibration.
+// Construct images, instructions, and trials only after online calibration
 function buildExperimentTimeline() {
     const taskTimeline = [];
     initializeTaskInstructions();
@@ -140,7 +140,6 @@ function buildExperimentTimeline() {
         trial_duration: itiDuration,
         data: () => ({...jsPsych.timelineVariable('data'), stage: 'iti'}),
     };
-
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         css_classes: ['trial-frame'],
@@ -270,7 +269,7 @@ function buildExperimentTimeline() {
         }],
         conditional_function: function() {
             const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-            return judgment.response_status === 'valid';
+            return judgment.isPractice !== 'off' && judgment.response_status === 'valid';
         },
     };
     const rating_stage = {
@@ -456,7 +455,7 @@ function buildExperimentTimeline() {
             }
             taskTimeline.push(break_pause);
             taskTimeline.push({
-                timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
+                timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, rating_stage],
                 timeline_variables: blockTrials,
                 randomize_order: false,
                 on_timeline_start: function() { $('#progressContainer').show(); },
