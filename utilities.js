@@ -1,14 +1,14 @@
 // from https://github.com/vassar-cogscilab/js-display-durations/blob/master/experiment/frame_rate_estimation.js
+
+// Estimate the average milliseconds per display frame, optionally trimming extreme samples.
 function estimate_frame_duration(callback, duration, trim) {
     let last = null;
     let frames = [];
     let start = performance.now();
-
     // Skip first frame to get more consistent estimate.
     window.requestAnimationFrame(function() {
         window.requestAnimationFrame(nextFrame);
     });
-
     function nextFrame(timestamp) {
         if (last !== null) {
             let frame_duration = timestamp - last;
@@ -22,7 +22,6 @@ function estimate_frame_duration(callback, duration, trim) {
             done();
         }
     }
-
     function done() {
         let toSum = null;
         if (trim) {
@@ -36,6 +35,7 @@ function estimate_frame_duration(callback, duration, trim) {
     }
 }
 
+// Shuffle an array in place using the current random seed and return it.
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -44,69 +44,26 @@ function shuffle(array) {
     return array;
 }
 
+// Read the browser name and version from its user-agent string.
 function getBrowser() {
-	var userAgent = navigator.userAgent.toLowerCase(),
-		browser   = '',
-		version   = 0;
-
-	$.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
-
-	// Is this a version of IE?
-	if ($.browser.msie) {
-	  userAgent = $.browser.version;
-	  userAgent = userAgent.substring(0,userAgent.indexOf('.'));
-	  version = userAgent;
-	  browser = "Internet Explorer";
-	}
-
-	// Is this a version of Chrome?
-	if ($.browser.chrome) {
-	  userAgent = userAgent.substring(userAgent.indexOf('chrome/') + 7);
-	  userAgent = userAgent.substring(0,userAgent.indexOf('.'));
-	  version = userAgent;
-	  // If it is chrome then jQuery thinks it's safari so we have to tell it it isn't
-	  $.browser.safari = false;
-	  browser = "Chrome";
-	}
-
-	// Is this a version of Safari?
-	if ($.browser.safari) {
-	  userAgent = userAgent.substring(userAgent.indexOf('safari/') + 7);
-	  userAgent = userAgent.substring(0,userAgent.indexOf('.'));
-	  version = userAgent;
-	  browser = "Safari";
-	}
-
-	// Is this a version of Mozilla?
-	if ($.browser.mozilla) {
-		//Is it Firefox?
-		if (navigator.userAgent.toLowerCase().indexOf('firefox') != -1) {
-			userAgent = userAgent.substring(userAgent.indexOf('firefox/') + 8);
-			userAgent = userAgent.substring(0,userAgent.indexOf('.'));
-			version = userAgent;
-			browser = "Firefox"
-		}
-		// If not then it must be another Mozilla
-		else {
-		  browser = "Mozilla (not Firefox)"
-		}
-	}
-
-	// Is this a version of Opera?
-	if ($.browser.opera) {
-		userAgent = userAgent.substring(userAgent.indexOf('version/') + 8);
-		userAgent = userAgent.substring(0,userAgent.indexOf('.'));
-		version = userAgent;
-		browser = "Opera";
-	}
-
-	// Now you have two variables, browser and version
-	// which have the right info
-
-	return [browser,version];
+    const userAgent = navigator.userAgent;
+    // Check browsers with Chrome/Safari tokens before matching those base tokens.
+    const browsers = [
+        ['Edge', /(?:Edg|Edge|EdgA|EdgiOS)\/(\d+)/i],
+        ['Opera', /(?:OPR|OPiOS)\/(\d+)/i],
+        ['Firefox', /(?:Firefox|FxiOS)\/(\d+)/i],
+        ['Chrome', /(?:Chrome|CriOS)\/(\d+)/i],
+        ['Safari', /Version\/(\d+).*Safari/i],
+        ['Internet Explorer', /(?:MSIE\s|Trident\/.*rv:)(\d+)/i],
+    ];
+    for (const [name, pattern] of browsers) {
+        const match = userAgent.match(pattern);
+        if (match) return [name, match[1]];
+    }
+    return ['Unknown', 0];
 }
 
-// Physical screen calibration; no card information or photographs are collected.
+// Create the card-matching page, apply its measured scale, and record pixels per centimeter.
 function createScreenCalibration(jsPsych) {
     return {
         type: jsPsychHtmlKeyboardResponse,
@@ -157,11 +114,12 @@ function createScreenCalibration(jsPsych) {
     };
 }
 
-// Stimulus geometry and SVG helpers.
+// Encode SVG markup as an image URL for jsPsych and instruction illustrations.
 function svgDataUrl(svgMarkup) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
 }
 
+// Convert visual-angle settings to rounded pixel sizes and update the shared dimensions and CSS.
 function applyScreenCalibration(pixelsPerCm) {
     if (!Number.isFinite(pixelsPerCm) || pixelsPerCm <= 0 || viewingDistanceCm <= 0) {
         throw new Error('Display dimensions and viewing distance must be positive numbers.');
@@ -183,12 +141,14 @@ function applyScreenCalibration(pixelsPerCm) {
     document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
 }
 
+// Build the outer SVG border, inset so its full thickness stays inside the image.
 function taskFrameOutline() {
     const inset = taskFrameBorderWidth / 2;
     const extent = taskFrameSize - taskFrameBorderWidth;
     return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
 }
 
+// Generate the grid image with two squares and optional green probe lines.
 function gridStimulus(lineLengths = null) {
     const size = taskFrameSize;
     let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="lightgray"/>`;
@@ -209,6 +169,7 @@ function gridStimulus(lineLengths = null) {
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
+// Add the imagined bar to an instruction image, drawing squares in front for the behind condition.
 function occluderIllustration(position = 'middle') {
     let markup = decodeURIComponent(gridStimulus().split(',')[1]);
     const cell = gridCellSize;

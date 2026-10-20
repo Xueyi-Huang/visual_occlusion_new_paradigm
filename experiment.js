@@ -436,7 +436,6 @@ function buildExperimentTimeline() {
                 data: {stage: 'block_instructions', block_num: blockNum},
                 on_start: function() { $('#progressContainer').hide(); },
             });
-            taskTimeline.push(break_pause);
             if (index > 0) {
                 const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
                 taskTimeline.push(break_pause);
@@ -453,7 +452,6 @@ function buildExperimentTimeline() {
                     choices: [' '],
                     data: {stage: 'after_block_practice', block_num: blockNum},
                 });
-                taskTimeline.push(break_pause);
             }
             taskTimeline.push(break_pause);
             taskTimeline.push({
