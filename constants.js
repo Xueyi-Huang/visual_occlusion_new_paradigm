@@ -45,8 +45,9 @@ function taskFrameOutline() {
     const extent = taskFrameSize - taskFrameBorderWidth;
     return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
 }
-const shortLine = 32;
-const longLine = 48;
+// Original probe-to-cell proportions: 0.72° / 3° and 0.90° / 3°.
+const shortLine = gridCellSize * (0.72 / 3);
+const longLine = gridCellSize * (0.90 / 3);
 const linePairs = [
     [shortLine, shortLine],
     [longLine, longLine],
@@ -69,7 +70,7 @@ function gridStimulus(lineLengths = null) {
         lineLengths.forEach((length, index) => {
             const x = (index === 0 ? 1.5 : 3.5) * gridCellSize;
             const y = size / 2;
-            markup += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#ff0000" stroke-width="${lineWidth}"/>`;
+            markup += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
         });
     }
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');

@@ -27,7 +27,7 @@ function fixationInstruction() {
 }
 
 function initializeTaskInstructions() {
-    response_instructions = `<p>Your task is to determine <strong>whether the two red lines have the same or different lengths</strong>.</p>
+    response_instructions = `<p>Your task is to determine <strong>whether the two green lines have the same or different lengths</strong>.</p>
         <p>You will need to press <strong>"${keySame}"</strong> if they are the same length, or <strong>"${keyDifferent}"</strong> if they are different lengths.</p>`;
     rating_instructions = `<p>Then, you will be asked to <strong>rate how vivid your mental image was</strong>.</p>
         <p>Rate each trial <strong>based on your experience during that specific one</strong>, independently of how you've rated other trials. Choose 1 if you could not form an image, and 5 if it was as vivid as actually seeing the bar.</p>`;
@@ -35,7 +35,7 @@ function initializeTaskInstructions() {
         instructionPage(`<p>${skip_vviq === 'off' ? 'Thanks for the help. And welcome to the experiment part!' : 'Welcome! Thanks for helping us better understand how vision and imagination work.'}</p>
             <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths as quickly and accurately as you can</strong>.</p>`),
         fixationInstruction(),
-        instructionPage(`${response_instructions}<p>In this example, the lines are the same length. You'd press <strong>"${keySame}"</strong>.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Two equally short red lines')}`),
+        instructionPage(`${response_instructions}<p>In this example, the lines are the same length. You'd press <strong>"${keySame}"</strong>.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Two equally short green lines')}`),
         instructionPage(`<p>The two lines in this example have different lengths. You'd press <strong>"${keyDifferent}"</strong>.</p>${instructionImage(gridStimulus([shortLine, longLine]), 'Short left line and long right line')}`),
         instructionPage(practiceStartText()),
     ];
@@ -50,7 +50,7 @@ function initializeTaskInstructions() {
         instructionPage(`<p>Well done!</p><p>Now, let's <strong>combine the imagination task with the same/different task</strong>. Click "Next" to read the complete procedure.</p>`),
         fixationInstruction(),
         ...imageryInstructionPages(firstBlockCondition),
-        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible until the two red lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
+        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible until the two green lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible green lines')}`),
         instructionPage(rating_instructions),
         instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>. We also need you to respond to the lines <strong>as quickly and accurately as possible</strong>.</p>${practiceStartText()}`),
     ];
@@ -206,7 +206,7 @@ function afterBlockPracticeText(blockNum, conditionId) {
     return instructionPage(`<p><strong>Well done!</strong> You've finished practice for this block. Your tasks for the real trials are the same as those in the practice. Just a refresher:</p>
         <p>${imageryDescription(conditionId)}</p>
         ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
-        <p>Keep imagining the bar <strong>as vividly as possible</strong> until the red lines appear.</p>
+        <p>Keep imagining the bar <strong>as vividly as possible</strong> until the green lines appear.</p>
         <p>Also, try to judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
         <p>Press "Space" when you're ready to start.</p>`);
 }
@@ -230,7 +230,7 @@ function blockInstructionPages(conditionId, blockNum) {
         return [instructionPage(`<p><strong>Well done!</strong> You've finished practice. Let's start the first block. Your tasks for the real trials are the same as those in the practice.</p>
             <p>${imageryDescription(conditionId)}</p>
             ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
-            <p>Keep imagining the bar <strong>as vividly as possible</strong> until the red lines appear.</p>
+            <p>Keep imagining the bar <strong>as vividly as possible</strong> until the green lines appear.</p>
             <p>Judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
             <p>Click "Next" when you're ready. Good luck!</p>`)];
     }
@@ -242,9 +242,9 @@ function blockInstructionPages(conditionId, blockNum) {
         instructionPage(`${welcomeText}
             <p>In this block, you'll continue with the <strong>imagination task combined with the same/different task</strong>. Click "Next" to see what you should imagine.</p>`),
         ...imageryInstructionPages(conditionId),
-        instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it <strong>as vividly as possible until the two red lines appear</strong>.</p>
+        instructionPage(`<p>Imagine the bar <strong>with your eyes open</strong>, and keep imagining it <strong>as vividly as possible until the two green lines appear</strong>.</p>
             ${response_instructions}
-            ${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible red lines')}`),
+            ${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible green lines')}`),
         instructionPage(rating_instructions),
         instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>. Respond <strong>as quickly and accurately as possible</strong>.</p><p>Go back now if you want to reread anything. If you are ready, click "Next" to start the main trials.</p>`),
     ];

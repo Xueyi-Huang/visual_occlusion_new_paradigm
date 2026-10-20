@@ -114,7 +114,7 @@ const lines_stage = {
     css_classes: ['trial-frame'],
     stimulus: jsPsych.timelineVariable('stimulus'),
     prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-        ? '' : '<p>Compare the two red lines</p>',
+        ? '' : '<p>Compare the two green lines</p>',
     choices: [keySame, keyDifferent],
     response_ends_trial: true,
     trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
