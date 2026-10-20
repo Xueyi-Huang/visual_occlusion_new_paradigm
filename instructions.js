@@ -6,7 +6,7 @@ let response_instructions, rating_instructions, line_practice_pages, imagery_pra
 
 // Build color-dependent text after participant assignment in experiment.js.
 function instructionImage(source, description) {
-    return `<img src="${source}" alt="${description}" style="width:300px;max-width:100%;height:auto;display:block;margin:16px auto;">`;
+    return `<img src="${source}" alt="${description}" style="width:${taskFrameSize}px;max-width:100%;height:auto;display:block;margin:16px auto;">`;
 }
 
 function instructionPage(content) {
@@ -33,7 +33,7 @@ function initializeTaskInstructions() {
         <p>Rate each trial <strong>based on your experience during that specific one</strong>, independently of how you've rated other trials. Choose 1 if you could not form an image, and 5 if it was as vivid as actually seeing the bar.</p>`;
     line_practice_pages = [
         instructionPage(`<p>${skip_vviq === 'off' ? 'Thanks for the help. And welcome to the experiment part!' : 'Welcome! Thanks for helping us better understand how vision and imagination work.'}</p>
-            <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths as quickly and accurately as you can</strong>.</p>`),
+            <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths accurately</strong>.</p>`),
         fixationInstruction(),
         instructionPage(`${response_instructions}<p>In this example, the lines are the same length. You'd press <strong>"${keySame}"</strong>.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Two equally short green lines')}`),
         instructionPage(`<p>The two lines in this example have different lengths. You'd press <strong>"${keyDifferent}"</strong>.</p>${instructionImage(gridStimulus([shortLine, longLine]), 'Short left line and long right line')}`),
@@ -52,7 +52,7 @@ function initializeTaskInstructions() {
         ...imageryInstructionPages(firstBlockCondition),
         instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible until the two green lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible green lines')}`),
         instructionPage(rating_instructions),
-        instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>. We also need you to respond to the lines <strong>as quickly and accurately as possible</strong>.</p>${practiceStartText()}`),
+        instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p>${practiceStartText()}`),
     ];
 }
 
@@ -207,7 +207,7 @@ function afterBlockPracticeText(blockNum, conditionId) {
         <p>${imageryDescription(conditionId)}</p>
         ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
         <p>Keep imagining the bar <strong>as vividly as possible</strong> until the green lines appear.</p>
-        <p>Also, try to judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
+        <p>Also, focus on judging the line lengths <strong>accurately</strong>.</p>
         <p>Press "Space" when you're ready to start.</p>`);
 }
 
@@ -231,7 +231,7 @@ function blockInstructionPages(conditionId, blockNum) {
             <p>${imageryDescription(conditionId)}</p>
             ${instructionImage(occluderIllustration(position), imageryDescription(conditionId))}
             <p>Keep imagining the bar <strong>as vividly as possible</strong> until the green lines appear.</p>
-            <p>Judge the line lengths as <strong>quickly and accurately</strong> as you can.</p>
+            <p>Focus on judging the line lengths <strong>accurately</strong>.</p>
             <p>Click "Next" when you're ready. Good luck!</p>`)];
     }
     const totalBlocks = Math.max(1, maxBlockNum || 3);
@@ -246,6 +246,6 @@ function blockInstructionPages(conditionId, blockNum) {
             ${response_instructions}
             ${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible green lines')}`),
         instructionPage(rating_instructions),
-        instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>. Respond <strong>as quickly and accurately as possible</strong>.</p><p>Go back now if you want to reread anything. If you are ready, click "Next" to start the main trials.</p>`),
+        instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p><p>Go back now if you want to reread anything. If you are ready, click "Next" to start the main trials.</p>`),
     ];
 }

@@ -31,8 +31,8 @@ function svgDataUrl(svgMarkup) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
 }
 
-// All stimuli share the same canvas size (400) to keep their centers aligned.
-const gridCellSize = 80;
+// Approximately 3° per cell at 60 cm on a 40 cm-high, 720 CSS-px display.
+const gridCellSize = 57;
 const taskFrameSize = gridCellSize * 5;
 const taskFrameBorderWidth = 6;
 const taskFrameBorderColor = 'black';
@@ -46,8 +46,8 @@ function taskFrameOutline() {
     return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
 }
 // Original probe-to-cell proportions: 0.72° / 3° and 0.90° / 3°.
-const shortLine = gridCellSize * (0.72 / 3);
-const longLine = gridCellSize * (0.90 / 3);
+const shortLine = Math.round(gridCellSize * (0.72 / 3));
+const longLine = Math.round(gridCellSize * (0.90 / 3));
 const linePairs = [
     [shortLine, shortLine],
     [longLine, longLine],
