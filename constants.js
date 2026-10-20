@@ -1,16 +1,26 @@
-const online = "off"; // "on": card calibration; "off": fixed lab stimulus sizes.
-const viewingDistanceCm = 60; // Assumed distance after participant instructions.
-
+const online = "off"; // "on": card calibration; "off": use the lab display settings below.
 const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
 const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
 
-// Imagery condition IDs; independent of randomized block order.
-const conditionPositions = {1: 'middle', 2: 'top', 3: 'behind'};
+// Display setup:
+const viewingDistanceCm = 60;
+const labScreenHeightCm = 35; // Height of the lit display area, excluding the bezel.
+const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
+    gridCell: 3,
+    shortLine: 0.72,
+    longLine: 0.90,
+    lineWidth: 0.08,
+    gridLineWidth: 0.03,
+    frameBorderWidth: 0.32, // Keeps the outer frame prominent
+};
 
+// Experiment design parameters.
+const conditionPositions = {1: 'middle', 2: 'top', 3: 'behind'};
 const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per block, 192 total.
 
+// Stimulus timing in milliseconds.
 const itiDuration = 500;
 const fixationDuration = 500;
 const linesDuration = 250;
@@ -18,8 +28,7 @@ const imageryDuration = 4000;
 const feedbackDuration = 1000;
 const maxResponseTime = 2000;
 const minResponseTime = 200;
-
-const linesDurationPractice = 750; // Longer line viewing in practice round 1.
+const linesDurationPractice = 1000; // Longer line viewing in practice round 1.
 const imageryDurationPractice = 5000;
 
 const currentURL = window.location.href;
@@ -29,49 +38,42 @@ let debriefURL = "consent_and_debriefing/debriefing.html" + '?' + splitURL;
 const keySame = 'S';
 const keyDifferent = 'D';
 
-const promptPlaceholder = "<br><span style='color: lightgray;'>placeholder</span>";
 function svgDataUrl(svgMarkup) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
 }
 
-// Approximately 3° per cell at 60 cm on a 40 cm-high, 720 CSS-px display.
-let gridCellSize = 57;
-let taskFrameSize = gridCellSize * 5;
-const taskFrameBorderWidth = 6;
+// All geometry comes from one physical scale, for both lab and online runs.
+let gridCellSize, taskFrameSize, taskFrameBorderWidth;
+let shortLine, longLine, linePairs, lineWidth, gridLineWidth;
 const taskFrameBorderColor = 'black';
-document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
-document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
-document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
+
+function applyScreenCalibration(pixelsPerCm) {
+    if (!Number.isFinite(pixelsPerCm) || pixelsPerCm <= 0 || viewingDistanceCm <= 0) {
+        throw new Error('Display dimensions and viewing distance must be positive numbers.');
+    }
+    const pixelsForDegrees = degrees => Math.max(1, Math.round(
+        2 * viewingDistanceCm * Math.tan(degrees * Math.PI / 360) * pixelsPerCm
+    ));
+    gridCellSize = pixelsForDegrees(stimulusAngles.gridCell);
+    taskFrameSize = gridCellSize * 5;
+    shortLine = pixelsForDegrees(stimulusAngles.shortLine);
+    longLine = pixelsForDegrees(stimulusAngles.longLine);
+    lineWidth = pixelsForDegrees(stimulusAngles.lineWidth);
+    gridLineWidth = 1; // Keep the original subtle dashed grid at every display scale.
+    taskFrameBorderWidth = pixelsForDegrees(stimulusAngles.frameBorderWidth);
+    linePairs = [[shortLine, shortLine], [longLine, longLine], [shortLine, longLine], [longLine, shortLine]];
+    document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
+    document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
+    document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
+}
+
+// Online calibration replaces this initial scale before the task is built.
+applyScreenCalibration(screen.height / labScreenHeightCm);
 
 function taskFrameOutline() {
     const inset = taskFrameBorderWidth / 2;
     const extent = taskFrameSize - taskFrameBorderWidth;
     return `<rect x="${inset}" y="${inset}" width="${extent}" height="${extent}" fill="none" stroke="${taskFrameBorderColor}" stroke-width="${taskFrameBorderWidth}"/>`;
-}
-// Original probe-to-cell proportions: 0.72° / 3° and 0.90° / 3°.
-let shortLine = Math.round(gridCellSize * (0.72 / 3));
-let longLine = Math.round(gridCellSize * (0.90 / 3));
-let linePairs = [
-    [shortLine, shortLine],
-    [longLine, longLine],
-    [shortLine, longLine],
-    [longLine, shortLine],
-];
-let lineWidth = 3;
-let gridLineWidth = 1;
-
-function applyScreenCalibration(pixelsPerCm) {
-    const pixelsForDegrees = degrees => Math.round(
-        2 * viewingDistanceCm * Math.tan(degrees * Math.PI / 360) * pixelsPerCm
-    );
-    gridCellSize = pixelsForDegrees(3);
-    taskFrameSize = gridCellSize * 5;
-    shortLine = pixelsForDegrees(0.72);
-    longLine = pixelsForDegrees(0.90);
-    lineWidth = Math.max(1, pixelsForDegrees(0.08));
-    gridLineWidth = Math.max(1, pixelsForDegrees(0.03));
-    linePairs = [[shortLine, shortLine], [longLine, longLine], [shortLine, longLine], [longLine, shortLine]];
-    document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
 }
 
 function gridStimulus(lineLengths = null) {

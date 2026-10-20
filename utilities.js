@@ -137,7 +137,7 @@ function createScreenCalibration(jsPsych) {
             button.addEventListener('click', function() {
                 const cardWidthPx = card.getBoundingClientRect().width;
                 const pixelsPerCm = cardWidthPx / 8.56;
-                const cellSize = Math.round(2 * viewingDistanceCm * Math.tan(3 * Math.PI / 360) * pixelsPerCm);
+                const cellSize = Math.round(2 * viewingDistanceCm * Math.tan(stimulusAngles.gridCell * Math.PI / 360) * pixelsPerCm);
                 const frameSize = cellSize * 5;
                 if (frameSize > Math.min(window.innerWidth - 48, window.innerHeight - 180)) {
                     message.textContent = 'The task display would not fit this window. Please check the card match and maximize your window, or use a larger screen.';
