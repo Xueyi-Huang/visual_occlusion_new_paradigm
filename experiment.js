@@ -1,17 +1,17 @@
 /* initialize jsPsych */
-let jsPsych = initJsPsych({
+const jsPsych = initJsPsych({
     display_element: 'jspsych-target',
     on_finish: function() {
-        if (save_data_locally == "on"){
-            jsPsych.data.get().localSave('csv','mydata.csv');
+        if (save_data_locally === 'on') {
+            jsPsych.data.get().localSave('csv', 'mydata.csv');
         }
         window.location.href = debriefURL;
     },
     exclusions: {
         min_width: 920,
         min_height: 620
-    }
-})
+    },
+});
 
 // capture info from Prolific
 let subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
@@ -23,15 +23,15 @@ const occluderColor = squareColor === 'black' ? 'white' : 'black';
 const blockOrder = shuffle([1, 2, 3]); // 1 = middle, 2 = top, 3 = behind. Randomize the order of the three imagery conditions.
 const firstBlockCondition = blockOrder[0];
 const practiceImageryPosition = conditionPositions[firstBlockCondition];
-let study_id = jsPsych.data.getURLVariable('STUDY_ID');
-let session_id = jsPsych.data.getURLVariable('SESSION_ID');
-let windowHeight = window.innerHeight;
-let windowWidth = window.innerWidth;
-let screenHeight = screen.height;
-let screenWidth = screen.width;
-let browserInfo = getBrowser();
-let browserName = browserInfo[0];
-let browserVersion = browserInfo[1];
+const study_id = jsPsych.data.getURLVariable('STUDY_ID');
+const session_id = jsPsych.data.getURLVariable('SESSION_ID');
+const windowHeight = window.innerHeight;
+const windowWidth = window.innerWidth;
+const screenHeight = screen.height;
+const screenWidth = screen.width;
+const browserInfo = getBrowser();
+const browserName = browserInfo[0];
+const browserVersion = browserInfo[1];
 
 jsPsych.data.addProperties({
     subject_id: subject_id,
@@ -52,7 +52,6 @@ jsPsych.data.addProperties({
 });
 
 let frame_duration;
-let frame_rate;
 let linesOnsetTime;
 let questionOnsetTime;
 let trials = [];
@@ -60,7 +59,7 @@ let block1 = [];
 let block2 = [];
 let block3 = [];
 let real_trial_num = 1;
-let timeline = [];
+const timeline = [];
 let practice;
 let blockNum;
 const maxBlockNum = 3;
@@ -69,16 +68,16 @@ let practice_trials_1, practice_trials_2, practice_trials_3;
 let practice_trials_block_2, practice_trials_block_3;
 
 // Start experiment with fullscreen.
-let fullscreen_on = {
+const fullscreen_on = {
     type: jsPsychFullscreen,
     message: wellcome_text,
-    button_label: "Begin",
+    button_label: 'Begin',
     fullscreen_mode: true,
     on_start: function() {
-        estimate_frame_duration(function(frame_rate) {
-            frame_duration = frame_rate;
+        estimate_frame_duration(function(frameDurationMs) {
+            frame_duration = frameDurationMs;
             jsPsych.data.addProperties({frame_duration});
-            console.log("Estimated frame duration: ", frame_rate);
+            console.log('Estimated frame duration (ms): ', frameDurationMs);
         }, 5000, true);
         $('#progressContainer').hide();
     },
@@ -86,7 +85,7 @@ let fullscreen_on = {
 };
 timeline.push(fullscreen_on);
 
-let frame_duration_exclusion = {
+const frame_duration_exclusion = {
     type: jsPsychInstructions,
     pages: function() {
         if (frame_duration < 17) {
@@ -103,11 +102,6 @@ let frame_duration_exclusion = {
         }
     },
     allow_keys: false,
-    on_finish: function() {
-        jsPsych.data.addProperties({
-            frame_duration: frame_duration,
-        });
-    }
 };
 timeline.push(frame_duration_exclusion);
 
@@ -127,7 +121,7 @@ function buildExperimentTimeline() {
     const taskTimeline = [];
     initializeTaskInstructions();
     // /* preload images */
-    let preloadImages = {
+    const preloadImages = {
         type: jsPsychPreload,
         images: [gridStimulus(), ...linePairs.map(lineLengths => gridStimulus(lineLengths))],
     };
@@ -146,7 +140,7 @@ function buildExperimentTimeline() {
         type: jsPsychHtmlKeyboardResponse,
         css_classes: ['trial-frame'],
         stimulus: '<div class="task-panel fixation-text">+</div>',
-        choices: "NO_KEYS",
+        choices: 'NO_KEYS',
         trial_duration: fixationDuration,
         data: () => ({...jsPsych.timelineVariable('data'), stage: 'fixation'}),
     };
@@ -155,7 +149,7 @@ function buildExperimentTimeline() {
         render_on_canvas: false, // Keep the SVG sharp on high-density displays.
         css_classes: ['trial-frame'],
         stimulus: gridStimulus(),
-        choices: "NO_KEYS",
+        choices: 'NO_KEYS',
         prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
             ? '' : `<p>${jsPsych.timelineVariable('imagery_cue')}</p>`,
         trial_duration: () => jsPsych.timelineVariable('imagery_duration'),
@@ -180,7 +174,7 @@ function buildExperimentTimeline() {
         choices: [keySame, keyDifferent],
         response_ends_trial: true,
         trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
-        data: () => ({...jsPsych.timelineVariable('data'), stage: 'presentation'}),
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'lines'}),
         on_load: function() {
             linesOnsetTime = performance.now();
         },
@@ -218,7 +212,11 @@ function buildExperimentTimeline() {
     };
     function feedbackTrialData(stage) {
         const judgment = jsPsych.data.get().filter({stage: 'judgment'}).last(1).values()[0];
-        return {...jsPsych.timelineVariable('data'), stage, correct: judgment.correct, response_status: judgment.response_status,
+        return {
+            ...jsPsych.timelineVariable('data'),
+            stage,
+            correct: judgment.correct,
+            response_status: judgment.response_status,
         };
     }
 
@@ -277,7 +275,7 @@ function buildExperimentTimeline() {
     const rating_stage = {
         type: jsPsychHtmlButtonResponse,
         css_classes: ['trial-frame'],
-        choices: ["1", "2", "3", "4", "5"],
+        choices: ['1', '2', '3', '4', '5'],
         stimulus: '<div class="task-panel rating-panel">How vivid?</div>',
         prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
             ? '' : '<p>1 (Not vivid at all) - 5 (Perfectly vivid)</p>',
@@ -292,10 +290,10 @@ function buildExperimentTimeline() {
         },
         on_finish: function(data) {
             data.rating = Number(data.response) + 1;
-            if (data.isPractice === "off") {
+            if (data.isPractice === 'off') {
                 $("#progressBar").css("width", (data.real_trial_num / trials.length) * 100 + "%");
             }
-            if (save_data_locally !== "on") saveData();
+            if (save_data_locally !== 'on') saveData();
         },
     };
 
@@ -448,7 +446,7 @@ function buildExperimentTimeline() {
                 taskTimeline.push(break_pause);
                 taskTimeline.push({
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: afterBlockPracticeText(blockNum, condition),
+                    stimulus: afterBlockPracticeText(condition),
                     choices: [' '],
                     data: {stage: 'after_block_practice', block_num: blockNum},
                 });
@@ -493,14 +491,14 @@ function buildExperimentTimeline() {
         };
     }
 
-    let thank_you = {
+    const thank_you = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: thank_you_text,
-        choices: [" "],
+        choices: [' '],
         on_start: function() {
             $("#progressContainer").hide();
             document.documentElement.style.cursor = 'default';
-        }
+        },
     };
     taskTimeline.push(thank_you);
 
@@ -524,9 +522,7 @@ function buildExperimentTimeline() {
         }],
         data: {stage: 'imagery_experience'},
         button_label: 'Continue',
-        on_finish: function(data) {
-            saveQuestionnaire(data);
-        },
+        on_finish: saveQuestionnaire,
     };
     taskTimeline.push(projectorQuestion);
 
@@ -598,19 +594,19 @@ function buildExperimentTimeline() {
 
 // Function to save data after each trial
 function saveData(done) {
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open('POST', 'write_data.php');
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = function() {
         if (xhr.status == 200) {
-            var response = JSON.parse(xhr.responseText);
+            const response = JSON.parse(xhr.responseText);
             console.log(response.success);
         }
-        if (typeof done === "function") done();
+        if (typeof done === 'function') done();
     };
 
     // Get data from the last trial only and send it
-    let lastTrialData = jsPsych.data.getLastTrialData().json();
+    const lastTrialData = jsPsych.data.getLastTrialData().json();
     xhr.send(lastTrialData); // Send only the last trial's data
 }
 

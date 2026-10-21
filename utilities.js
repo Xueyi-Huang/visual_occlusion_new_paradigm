@@ -3,19 +3,19 @@
 // Estimate the average milliseconds per display frame, optionally trimming extreme samples.
 function estimate_frame_duration(callback, duration, trim) {
     let last = null;
-    let frames = [];
-    let start = performance.now();
+    const frames = [];
+    const start = performance.now();
     // Skip first frame to get more consistent estimate.
     window.requestAnimationFrame(function() {
         window.requestAnimationFrame(nextFrame);
     });
     function nextFrame(timestamp) {
         if (last !== null) {
-            let frame_duration = timestamp - last;
+            const frame_duration = timestamp - last;
             frames.push(frame_duration);
         }
         last = timestamp;
-        let remaining = duration - (timestamp - start);
+        const remaining = duration - (timestamp - start);
         if (remaining > 0) {
             window.requestAnimationFrame(nextFrame);
         } else {
@@ -25,12 +25,12 @@ function estimate_frame_duration(callback, duration, trim) {
     function done() {
         let toSum = null;
         if (trim) {
-            let sorted = frames.sort();
+            const sorted = frames.sort();
             toSum = sorted.slice(Math.round(sorted.length*0.1), Math.round(sorted.length*0.9));
         } else {
             toSum = frames;
         }
-        let sum = toSum.reduce(function(total, num) { return total + num; });
+        const sum = toSum.reduce(function(total, num) { return total + num; });
         callback(sum / toSum.length);
     }
 }
@@ -171,7 +171,7 @@ function gridStimulus(lineLengths = null) {
 
 // Add the imagined bar to an instruction image, drawing squares in front for the behind condition.
 function occluderIllustration(position = 'middle') {
-    let markup = decodeURIComponent(gridStimulus().split(',')[1]);
+    const markup = decodeURIComponent(gridStimulus().split(',')[1]);
     const cell = gridCellSize;
     const geometry = {
         middle: [2 * cell, cell, cell, 3 * cell],

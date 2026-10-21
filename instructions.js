@@ -147,8 +147,8 @@ const demographics_html = `
     `;
 
 function toggleSpecifyInput() {
-    var select = document.getElementById("d6_visDefi");
-    var specifyContainer = document.getElementById("specifyContainer");
+    const select = document.getElementById("d6_visDefi");
+    const specifyContainer = document.getElementById("specifyContainer");
     if (select.value === "Yes") {
         specifyContainer.style.display = "inline"; // Show input next to the dropdown
     } else {
@@ -201,7 +201,7 @@ function imageryDescription(conditionId) {
     return descriptions[conditionId];
 }
 
-function afterBlockPracticeText(blockNum, conditionId) {
+function afterBlockPracticeText(conditionId) {
     const position = conditionPositions[conditionId];
     return instructionPage(`<p><strong>Well done!</strong> You've finished practice for this block. Your tasks for the real trials are the same as those in the practice. Just a refresher:</p>
         <p>${imageryDescription(conditionId)}</p>

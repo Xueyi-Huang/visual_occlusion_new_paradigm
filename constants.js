@@ -1,4 +1,4 @@
-const online = "off"; // "on": card calibration; "off": use the lab display settings below.
+const online = "on"; // "on": card calibration; "off": use the lab display settings below.
 const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
@@ -12,7 +12,6 @@ const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
     shortLine: 0.72,
     longLine: 0.90,
     lineWidth: 0.08,
-    gridLineWidth: 0.03,
     frameBorderWidth: 0.32,
 };
 
@@ -33,7 +32,7 @@ const imageryDurationPractice = 5000;
 
 const currentURL = window.location.href;
 const splitURL = currentURL.split("?")[1];
-let debriefURL = "consent_and_debriefing/debriefing.html" + '?' + splitURL;
+const debriefURL = "consent_and_debriefing/debriefing.html" + '?' + splitURL;
 
 const keySame = 'S';
 const keyDifferent = 'D';
