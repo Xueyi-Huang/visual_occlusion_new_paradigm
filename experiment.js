@@ -15,7 +15,7 @@ const jsPsych = initJsPsych({
 
 // capture info from Prolific
 let subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
-if (subject_id == null) subject_id = 0;
+if (subject_id == null) subject_id = 20;
 Math.seedrandom(subject_id); // Reproduce assignment and trial order for this participant.
 
 const squareColor = Math.random() < 0.5 ? 'black' : 'white';
@@ -131,6 +131,14 @@ function buildExperimentTimeline() {
         ]),
     };
     taskTimeline.push(preloadImages);
+    if (jump_to_questionnaire !== 'on') {
+        taskTimeline.push({
+            type: jsPsychInstructions,
+            pages: perception_initial_instruction_pages(),
+            show_clickable_nav: true,
+            data: {stage: 'initial_instructions'},
+        });
+    }
 
     // Responses are accepted from line onset; show the question only if still unanswered.
     const iti = {
@@ -163,7 +171,15 @@ function buildExperimentTimeline() {
         data: () => ({...jsPsych.timelineVariable('data'), stage: 'imagery'}),
     };
 */
-
+    const squares_stage = {
+        type: jsPsychImageKeyboardResponse,
+        render_on_canvas: false,
+        css_classes: ['trial-frame'],
+        stimulus: gridStimulus(),
+        choices: 'NO_KEYS',
+        trial_duration: squaresDuration,
+        data: () => ({...jsPsych.timelineVariable('data'), stage: 'squares'}),
+    };
     const perception_stage = {
         type: jsPsychImageKeyboardResponse,
         render_on_canvas: false,
@@ -242,21 +258,6 @@ function buildExperimentTimeline() {
             response_status: judgment.response_status,
         };
     }
-
-    const too_slow_warning = {
-        timeline: [{
-            type: jsPsychHtmlKeyboardResponse,
-            css_classes: ['trial-frame'],
-            stimulus: '<div class="task-panel feedback-incorrect">Too slow!<br>Press the space bar to continue.</div>',
-            choices: [' '],
-            response_ends_trial: true,
-            data: () => feedbackTrialData('too_slow_warning'),
-        }],
-        conditional_function: function() {
-            const judgment = jsPsych.data.getLastTrialData().values()[0];
-            return judgment.response_status === 'too_slow';
-        },
-    };
     const too_fast_warning = {
         timeline: [{
             type: jsPsychHtmlKeyboardResponse,
@@ -367,7 +368,7 @@ function buildExperimentTimeline() {
     practice_trials_1 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
         .map(pair => generate_trial('practice_lines', pair, 0, 'none'));
     const practice_round_1 = {
-        timeline: [iti, fixation, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
+        timeline: [iti, fixation, lines_stage, test_stage, too_fast_warning, response_feedback],
         timeline_variables: practice_trials_1,
         randomize_order: true,
         data: {isPractice: 'practice_lines'},
@@ -408,8 +409,8 @@ function buildExperimentTimeline() {
     practice_trials = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
         .map(pair => generate_trial('practice_block_1', pair, 1, practicePerceptionPosition));
     const practice_round = {
-        // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-        timeline: [iti, fixation, perception_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
+        // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_fast_warning, response_feedback, rating_stage],
+        timeline: [iti, fixation, squares_stage, perception_stage, lines_stage, test_stage, too_fast_warning, response_feedback],
         timeline_variables: practice_trials,
         randomize_order: true,
         data: {isPractice: 'practice_block_1'},
@@ -457,6 +458,7 @@ function buildExperimentTimeline() {
     practice_trials_block_3 = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
         .map(pair => generate_trial('practice_block_3', pair, 3, conditionPositions[blockOrder[2]]));
 */
+
     // Main trials: identical response sequence, with block-specific bar displays.
     for (let index = 0; index < blockOrder.length; index++) {
         const blockNum = index + 1;
@@ -477,8 +479,8 @@ function buildExperimentTimeline() {
                 const practiceTrials = index === 1 ? practice_trials_block_2 : practice_trials_block_3;
                 taskTimeline.push(break_pause);
                 taskTimeline.push({
-                    // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback, rating_stage],
-                    timeline: [iti, fixation, perception_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, response_feedback],
+                    // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_fast_warning, response_feedback, rating_stage],
+                    timeline: [iti, fixation, perception_stage, lines_stage, test_stage, too_fast_warning, response_feedback],
                     timeline_variables: practiceTrials,
                     randomize_order: true,
                     data: {isPractice: `practice_block_${blockNum}`, block_num: blockNum},
@@ -494,8 +496,8 @@ function buildExperimentTimeline() {
 */
             taskTimeline.push(break_pause);
             taskTimeline.push({
-                // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning, rating_stage],
-                timeline: [iti, fixation, perception_stage, lines_stage, test_stage, too_slow_warning, too_fast_warning],
+                // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_fast_warning, rating_stage],
+                timeline: [iti, fixation, squares_stage, perception_stage, lines_stage, test_stage, too_fast_warning],
                 timeline_variables: blockTrials,
                 randomize_order: false,
                 on_timeline_start: function() { $('#progressContainer').show(); },
@@ -509,7 +511,6 @@ function buildExperimentTimeline() {
     function generate_trial(practice, lineLengths, blockNum, position) {
         const isSame = lineLengths[0] === lineLengths[1];
         const presentationDuration = practice === 'practice_lines' ? linesDurationPractice : linesDuration;
-        const responseDuration = practice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(practice) ? maxResponseTime : null;
         const imaginationDuration = practice !== 'off' ? imageryDurationPractice : imageryDuration;
         const imageryCues = {
             none: '',
@@ -521,7 +522,6 @@ function buildExperimentTimeline() {
             stimulus: gridStimulus(lineLengths),
             imagery_cue: imageryCues[position],
             presentation_duration: presentationDuration,
-            response_duration: responseDuration,
             imagery_duration: imaginationDuration,
             data: {
                 isPractice: practice,
@@ -538,13 +538,12 @@ function buildExperimentTimeline() {
 
     function generate_trial(practice, lineLengths, blockNum, position) {
         const isSame = lineLengths[0] === lineLengths[1];
-        const timed = practice === 'off' || ['practice_block_1', 'practice_block_2', 'practice_block_3'].includes(practice);
         return {
             stimulus: perceptionStimulus(position, lineLengths),
             pre_probe_stimulus: perceptionStimulus(position),
             pre_probe_duration: practice === 'off' ? perceptionDuration : perceptionDurationPractice,
             presentation_duration: practice === 'practice_lines' ? linesDurationPractice : linesDuration,
-            response_duration: timed ? maxResponseTime : null,
+            response_duration: null, // Accuracy-focused task: wait for a response.
             data: {
                 isPractice: practice,
                 real_trial_num: 0,
@@ -603,9 +602,8 @@ function buildExperimentTimeline() {
             // Imagery version asked about strategies for imagining the bar and comparing the lines.
             {prompt: '1. Did you use any particular strategy when comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
             // Imagery version asked about time provided for imagining the bar and viewing the lines.
-            {prompt: '2. How did you feel about the time provided for viewing the bar and the lines?', name: 'timing', rows: 3, columns: 90, required: true},
-            {prompt: '3. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
-            {prompt: '4. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
+            {prompt: '2. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
+            {prompt: '3. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
         ],
         data: {stage: 'study_questionnaire'},
         on_finish: saveQuestionnaire,

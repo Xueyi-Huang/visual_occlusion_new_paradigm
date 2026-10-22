@@ -15,7 +15,6 @@ function instructionPage(content) {
 
 function practiceStartText() {
     return `<p>Let's do a few practice trials before we continue.</p>
-        <p>Please place two fingers from your left hand on <strong>"${keySame}"</strong> and <strong>"${keyDifferent}"</strong>, and use your left thumb to press "Space" when needed. Keep your right hand on your mouse or trackpad.</p>
         <p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p>
         <p>If you are ready, click "Next" to start practice.</p>`;
 }
@@ -161,6 +160,8 @@ function toggleSpecifyInput() {
     }
 }
 
+// Original imagery/VVIQ introduction retained for future use.
+/*
 function initial_instruction_pages() {
     return [
         "<div class='instructions left-aligned'>" +
@@ -194,6 +195,7 @@ function initial_instruction_pages() {
         "</div>",
     ];
 };
+*/
 
 // Original imagery block instructions retained for future use.
 /*
@@ -270,6 +272,17 @@ const screen_calibration_text = `<div class="instructions left-aligned">
 </div>`;
 
 
+function perception_initial_instruction_pages() {
+    return [
+        instructionPage(`<p>While reading the instructions, you can return to previous pages using the <strong>"Previous"</strong> button below.</p>
+            <p><strong>Do not use your browser's "Back" button</strong> during the experiment unless you wish to stop participating.</p>`),
+        instructionPage(`<p>Welcome! Thanks for helping us better understand how people's vision works.</p>
+            <p>Your task is to judge <strong>whether two lines have the same or different lengths</strong>.</p>
+            <p>First, you'll read the instructions and complete some practice. Then you'll complete three blocks, followed by a few questions about the study.</p>
+            <p>Click "Next" to learn the task.</p>`),
+    ];
+}
+
 // Active perception instructions: the bar is physically visible, with no imagery rating.
 function perceptionDescription(conditionId) {
     return {
@@ -285,14 +298,14 @@ function perceptionExample(conditionId, lengths = null) {
 
 function initializePerceptionInstructions() {
     response_instructions = `<p>Your task is to judge <strong>whether the two green lines have the same or different lengths</strong>.</p>
-        <p>Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths. You can answer while the lines are visible or after the question appears. Focus on answering accurately.</p>`;
+        <p>Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
     full_practice_pages = [
-        instructionPage('<p>Welcome! In this task, you will compare the lengths of two green lines.</p>'),
         fixationInstruction(),
-        instructionPage(`<p>After the cross, a grid, two ${squareColor} squares, and a ${occluderColor} bar will appear.</p><p>${perceptionDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
+        instructionPage(`<p>After the cross, you'll first see a grid with two ${squareColor} squares.</p>${instructionImage(gridStimulus(), 'The two squares before the bar appears')}`),
+        instructionPage(`<p>Next, a ${occluderColor} bar appears while the squares stay in place.</p><p>${perceptionDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
         instructionPage(`${response_instructions}<p>The bar stays visible while the lines appear. These lines have the <strong>same length</strong>, so press "${keySame}".</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
         instructionPage(`<p>These lines have <strong>different lengths</strong>, so press "${keyDifferent}".</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
-        instructionPage(`<p>During practice, you'll see whether your answer was correct. If a warning appears, press "Space" to continue. The main trials won't show correct/incorrect feedback.</p><p>Practice uses the same display as your first block.</p>${practiceStartText()}`),
+        instructionPage(`${practiceStartText()}`),
     ];
 }
 
@@ -305,7 +318,7 @@ function afterBlockPracticeText(conditionId) {
 
 function blockInstructionPages(conditionId, blockNum) {
     const reminder = instructionPage(`<p>${perceptionDescription(conditionId)}</p>${perceptionExample(conditionId)}
-        <p>The bar stays visible when the green lines appear. Judge only the line lengths.</p>${response_instructions}`);
+        <p>The two squares appear first, then the bar. The bar stays visible when the green lines appear. Judge only the line lengths.</p>${response_instructions}`);
     if (blockNum === 1) {
         return [instructionPage('<p><strong>Well done!</strong> You are ready for the first main block.</p>'), reminder,
             instructionPage('<p>Main trials do not show correct/incorrect feedback. Click "Next" when ready.</p>')];
