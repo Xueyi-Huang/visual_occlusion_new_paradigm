@@ -229,7 +229,7 @@ select {
     max-width: none;
     height: 100%;
     margin: 0;
-    padding: 80px 24px 60px;
+    padding: 20px 24px 60px;
     box-sizing: border-box;
     overflow-y: auto;
     text-align: center;

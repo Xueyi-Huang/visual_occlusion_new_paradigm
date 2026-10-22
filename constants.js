@@ -5,7 +5,7 @@ const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnai
 const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
 
 // Display setup:
-const viewingDistanceCm = 60;
+const viewingDistanceCm = 50;
 const labScreenHeightCm = 35; // No need to calibrate the display if the participant is in the lab, so we can use the known screen height to set the scale.
 const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
     gridCell: 3,
@@ -36,7 +36,7 @@ const feedbackDuration = 1000;  // Only for practice trials.
 const minResponseTime = 200;
 const linesDurationPractice = 1000; // Longer line viewing in practice round 1.
 // const imageryDurationPractice = 5000; // Imagery version retained.
-const perceptionDurationPractice = 5000;
+const perceptionDurationPractice = 1000;
 
 const currentURL = window.location.href;
 const splitURL = currentURL.split("?")[1];

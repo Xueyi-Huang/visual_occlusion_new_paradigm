@@ -8,8 +8,8 @@ const jsPsych = initJsPsych({
         window.location.href = debriefURL;
     },
     exclusions: {
-        min_width: 920,
-        min_height: 620
+        min_width: 800,
+        min_height: 600
     },
 });
 
@@ -210,8 +210,6 @@ function buildExperimentTimeline() {
         render_on_canvas: false,
         css_classes: ['trial-frame'],
         stimulus: () => jsPsych.timelineVariable('stimulus'),
-        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-            ? '' : '<p>Compare the two green lines</p>',
         choices: [keySame, keyDifferent],
         response_ends_trial: true,
         trial_duration: () => jsPsych.timelineVariable('presentation_duration'),
@@ -547,7 +545,7 @@ function buildExperimentTimeline() {
             // Nothing trials keep the squares on screen for both pre-probe intervals.
             squares_duration: squaresDuration + (occlusion === 'nothing' ? barDuration : 0),
             pre_probe_duration: barDuration,
-            presentation_duration: linesDuration,
+            presentation_duration: practice === 'off' ? linesDuration : linesDurationPractice,
             data: {
                 isPractice: practice,
                 real_trial_num: 0,

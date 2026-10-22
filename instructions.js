@@ -21,7 +21,7 @@ function practiceStartText() {
 
 function fixationInstruction() {
     const illustration = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${taskFrameSize}" height="${taskFrameSize}" viewBox="0 0 ${taskFrameSize} ${taskFrameSize}"><rect width="${taskFrameSize}" height="${taskFrameSize}" fill="lightgray"/><text x="${taskFrameSize / 2}" y="${taskFrameSize / 2}" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="32" fill="black">+</text>${taskFrameOutline()}</svg>`);
-    return instructionPage(`<p>At the beginning of each trial, a cross will appear in the center of the screen. Please <strong>keep your gaze at the center throughout the trial</strong>.</p>
+    return instructionPage(`<p>At the beginning of each trial, a cross will appear in the center of the screen. Please <strong>keep your gaze at the center throughout the trial</strong> even after the cross disappears.</p>
         ${instructionImage(illustration, 'Fixation cross centered in the box')}`);
 }
 
@@ -260,13 +260,14 @@ function blockInstructionPages(conditionId, blockNum) {
 */
 const screen_calibration_text = `<div class="instructions left-aligned">
     <h2>Match your screen to a card</h2>
-    <p>We do this to keep the visual display the same physical size for all participants.</p>
-    <p>Use a standard bank card (85.6 × 53.98 mm, or 3.375 × 2.125 in). Hold it against your screen and move the slider until the rectangle's <strong>outside edges match the card</strong>.</p>
-    <p>After matching, put the card away and sit about <strong>${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) from the screen. Keep this distance throughout the task, and do not change browser zoom or switch screens.</p>
+    <p><strong>We do this to keep the visual display the same physical size for all participants.</strong></p>
+    <p>Use a <strong>standard bank card</strong> (85.6 × 53.98 mm, or 3.375 × 2.125 in). Hold it against your screen and move the slider until the rectangle's <strong>outside edges match the card</strong>.</p>
+    <p>After matching, put the card away and sit about <strong>${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) from the screen. <strong>Keep this distance throughout the task, and do not change browser zoom or switch screens</strong> so that the display appear a consistent size for you across the study.</p>
+    <br>
     <div id="calibration-card" style="width:320px;aspect-ratio:85.6 / 53.98;border:2px solid black;box-sizing:border-box;background:white;margin:24px auto;"></div>
-    <label for="card-size-slider">Adjust the rectangle's size:</label>
-    <input id="card-size-slider" type="range" min="120" max="800" step="1" value="320" style="display:block;width:100%;margin:20px 0;">
-    <p><label><input id="calibration-distance" type="checkbox"> I've matched the card and will sit about ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</label></p>
+    <input id="card-size-slider" type="range" min="120" max="600" step="1" value="320" style="display:block; width:60%; margin:20px auto;">
+    <p><label><input id="calibration-distance" type="checkbox"> <strong>I've matched the card and will sit about ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</strong></label></p>
+    <br>
     <button id="calibration-continue" class="jspsych-btn" disabled>Continue</button>
     <p id="calibration-message" role="status" aria-live="polite"></p>
 </div>`;
@@ -290,12 +291,12 @@ function perceptionDescription(conditionId) {
     const bar = orientation === 'vertical' ? 'upright' : 'sideways';
     return `The two ${squareColor} squares are ${squares}. ` + (occlusion === 'occluded'
         ? `A ${occluderColor} bar lies ${bar} between them, covering the middle three grid cells.`
-        : 'No bar appears between them.');
+        : '');
 }
 
 function perceptionSequenceDescription(conditionId) {
     return perceptionConditions[conditionId].occlusion === 'occluded'
-        ? 'The two squares appear first, then the bar. The bar stays visible when the green lines appear.'
+        ? `Then, a ${occluderColor} bar appears, covering the middle three grid cells between the two squares.`
         : 'The two squares stay on screen, then the green lines appear inside them.';
 }
 
@@ -304,14 +305,15 @@ function perceptionExample(conditionId, lengths = null) {
 }
 
 function initializePerceptionInstructions() {
-    response_instructions = `<p>Your task is to judge <strong>whether the two green lines have the same or different lengths</strong>.</p>
-        <p>Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
+    response_instructions = `<p>Finally, two green lines will appear in the two squares.</p><p>Your task is to judge <strong>whether they have the same or different lengths</strong>. Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
     full_practice_pages = [
         fixationInstruction(),
-        instructionPage(`<p>After the cross, you'll first see a grid with two ${squareColor} squares.</p>${instructionImage(perceptionStimulus(firstBlockCondition, null, false), 'The two squares')}`),
-        instructionPage(`<p>${perceptionSequenceDescription(firstBlockCondition)}</p><p>${perceptionDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
-        instructionPage(`${response_instructions}<p>These lines have the <strong>same length</strong>, so press "${keySame}".</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
-        instructionPage(`<p>These lines have <strong>different lengths</strong>, so press "${keyDifferent}".</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
+        instructionPage(`<p>Next, you'll see a grid with two ${squareColor} squares.</p>${instructionImage(perceptionStimulus(firstBlockCondition, null, false), 'The two squares')}`),
+        ...(perceptionConditions[firstBlockCondition].occlusion === 'occluded' ? [
+            instructionPage(`<p>${perceptionSequenceDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
+        ] : []),
+        instructionPage(`${response_instructions}<p>In this example, the lines have the <strong>same length</strong>, so you'll need to press <strong>"${keySame}"</strong>.</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
+        instructionPage(`<p>These lines in this example have <strong>different lengths</strong>, so you'll need to press <strong>"${keyDifferent}"</strong>.</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
         instructionPage(`${practiceStartText()}`),
     ];
 }
@@ -324,15 +326,13 @@ function afterBlockPracticeText(conditionId) {
 }
 
 function blockInstructionPages(conditionId, blockNum) {
-    const reminder = instructionPage(`<p>${perceptionDescription(conditionId)}</p>${perceptionExample(conditionId)}
-        <p>${perceptionSequenceDescription(conditionId)} Judge only the line lengths.</p>${response_instructions}`);
-    if (blockNum === 1) {
-        return [instructionPage('<p><strong>Well done!</strong> You are ready for the first main block.</p>'), reminder,
-            instructionPage('<p>Main trials do not show correct/incorrect feedback. Click "Next" when ready.</p>')];
-    }
-    return [
-        instructionPage(`<p>Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}!</p><p>The display changes in this block. You can take a short break here.</p>`),
-        reminder,
-        instructionPage(`<p>Focus on judging the line lengths accurately. You won't be told whether your answers are correct. Go back now if you want to reread anything, or click "Next" to start the main trials.</p>`),
-    ];
+    const welcome = blockNum === 1
+        ? '<strong>Well done!</strong> You are ready for the real trials.'
+        : `Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}! You can take a short break here.`;
+    return [instructionPage(`<p>${welcome}</p>
+        <p>Reminder: Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>
+        <p>The lines appear for less time than in practice, so the task may be difficult. There's no need to restart the study or return your submission even if you feel you are not doing well, <strong>but please try your best to judge the line lengths accurately</strong>. Main trials do not show correct/incorrect feedback.</p>
+        <p>Please sit back and stay about <strong>${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> from the screen throughout the task.</p>
+        <p>Click "Next" when you're ready to start. Good luck!</p>`)];
 }
+
