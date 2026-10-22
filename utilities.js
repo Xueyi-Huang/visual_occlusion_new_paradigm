@@ -169,7 +169,22 @@ function gridStimulus(lineLengths = null) {
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
-// Add the imagined bar to an instruction image, drawing squares in front for the behind condition.
+// Render a physical bar with optional probes; squares occlude the bar in the behind condition.
+function perceptionStimulus(position, lineLengths = null) {
+    if (position === 'none') return gridStimulus(lineLengths);
+    const markup = decodeURIComponent(occluderIllustration(position).split(',')[1]);
+    let probes = '';
+    if (lineLengths) {
+        lineLengths.forEach((length, index) => {
+            const x = (index === 0 ? 1.5 : 3.5) * gridCellSize;
+            const y = taskFrameSize / 2;
+            probes += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
+        });
+    }
+    return svgDataUrl(markup.replace('</svg>', probes + '</svg>'));
+}
+
+// Bar geometry is shared by perception displays and the retained imagery illustrations.
 function occluderIllustration(position = 'middle') {
     const markup = decodeURIComponent(gridStimulus().split(',')[1]);
     const cell = gridCellSize;

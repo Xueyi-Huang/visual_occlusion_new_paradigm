@@ -26,6 +26,8 @@ function fixationInstruction() {
         ${instructionImage(illustration, 'Fixation cross centered in the box')}`);
 }
 
+// Original imagery practice instructions retained for future use.
+/*
 function initializeTaskInstructions() {
     response_instructions = `<p>Your task is to determine <strong>whether the two green lines have the same or different lengths</strong>.</p>
         <p>You will need to press <strong>"${keySame}"</strong> if they are the same length, or <strong>"${keyDifferent}"</strong> if they are different lengths.</p>`;
@@ -55,7 +57,7 @@ function initializeTaskInstructions() {
         instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p>${practiceStartText()}`),
     ];
 }
-
+*/
 const thank_you_text = '<p>Thank you for completing the task! A few brief questionnaires are all that remain.</p><p>Press "Space" to continue.</p>';
 const buffer_text = '<p>Thank you for participating! Please allow 3 seconds for the data to be downloaded, and then click "Submit" to proceed to the debriefing page.</p>';
 
@@ -130,6 +132,7 @@ const demographics_html = `
             </select>
             <br /><br />
         </p>
+        <!-- Retained for the imagery version:
         <p>
         <label for="d8_imageryability">8. How would you describe your mental imagery in general?</label>
         <select id="d8_imageryability" name="d8_imageryability">
@@ -142,6 +145,7 @@ const demographics_html = `
             </select>
             <br /><br />
         </p>
+        -->
     </fieldset>
     <br>
     `;
@@ -191,6 +195,8 @@ function initial_instruction_pages() {
     ];
 };
 
+// Original imagery block instructions retained for future use.
+/*
 // Block-specific imagery instructions and examples.
 function imageryDescription(conditionId) {
     const descriptions = {
@@ -249,7 +255,7 @@ function blockInstructionPages(conditionId, blockNum) {
         instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p><p>Go back now if you want to reread anything. If you are ready, click "Next" to start the main trials.</p>`),
     ];
 }
-
+*/
 const screen_calibration_text = `<div class="instructions left-aligned">
     <h2>Match your screen to a card</h2>
     <p>We do this to keep the visual display the same physical size for all participants.</p>
@@ -262,3 +268,51 @@ const screen_calibration_text = `<div class="instructions left-aligned">
     <button id="calibration-continue" class="jspsych-btn" disabled>Continue</button>
     <p id="calibration-message" role="status" aria-live="polite"></p>
 </div>`;
+
+
+// Active perception instructions: the bar is physically visible, with no imagery rating.
+function perceptionDescription(conditionId) {
+    return {
+        1: `A ${occluderColor} bar stands upright between the two ${squareColor} squares, covering the middle three grid cells.`,
+        2: `A ${occluderColor} bar lies across the three grid cells just above the two ${squareColor} squares.`,
+        3: `A ${occluderColor} bar runs across the whole middle row, behind the two ${squareColor} squares. The squares hide the parts behind them.`,
+    }[conditionId];
+}
+
+function perceptionExample(conditionId, lengths = null) {
+    return instructionImage(perceptionStimulus(conditionPositions[conditionId], lengths), 'The visible bar and squares');
+}
+
+function initializePerceptionInstructions() {
+    response_instructions = `<p>Your task is to judge <strong>whether the two green lines have the same or different lengths</strong>.</p>
+        <p>Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths. You can answer while the lines are visible or after the question appears. Focus on answering accurately.</p>`;
+    full_practice_pages = [
+        instructionPage('<p>Welcome! In this task, you will compare the lengths of two green lines.</p>'),
+        fixationInstruction(),
+        instructionPage(`<p>After the cross, a grid, two ${squareColor} squares, and a ${occluderColor} bar will appear.</p><p>${perceptionDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
+        instructionPage(`${response_instructions}<p>The bar stays visible while the lines appear. These lines have the <strong>same length</strong>, so press "${keySame}".</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
+        instructionPage(`<p>These lines have <strong>different lengths</strong>, so press "${keyDifferent}".</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
+        instructionPage(`<p>During practice, you'll see whether your answer was correct. If a warning appears, press "Space" to continue. The main trials won't show correct/incorrect feedback.</p><p>Practice uses the same display as your first block.</p>${practiceStartText()}`),
+    ];
+}
+
+function afterBlockPracticeText(conditionId) {
+    return instructionPage(`<p><strong>Well done!</strong> Practice is complete. The main trials use the same display.</p>
+        <p>${perceptionDescription(conditionId)}</p>${perceptionExample(conditionId)}
+        <p>Focus on judging the line lengths <strong>accurately</strong>. You won't be told whether your answers are correct during the main trials.</p>
+        <p>Press "Space" when you're ready to start.</p>`);
+}
+
+function blockInstructionPages(conditionId, blockNum) {
+    const reminder = instructionPage(`<p>${perceptionDescription(conditionId)}</p>${perceptionExample(conditionId)}
+        <p>The bar stays visible when the green lines appear. Judge only the line lengths.</p>${response_instructions}`);
+    if (blockNum === 1) {
+        return [instructionPage('<p><strong>Well done!</strong> You are ready for the first main block.</p>'), reminder,
+            instructionPage('<p>Main trials do not show correct/incorrect feedback. Click "Next" when ready.</p>')];
+    }
+    return [
+        instructionPage(`<p>Welcome to ${blockNum === maxBlockNum ? 'the final block' : `block ${blockNum}`}!</p><p>The bar changes position in this block. You can take a short break here.</p>`),
+        reminder,
+        instructionPage(`<p>Focus on judging the line lengths accurately. You won't be told whether your answers are correct. Go back now if you want to reread anything, or click "Next" to start the main trials.</p>`),
+    ];
+}

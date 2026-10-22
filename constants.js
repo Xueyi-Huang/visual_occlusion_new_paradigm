@@ -23,12 +23,14 @@ const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per blo
 const itiDuration = 500;
 const fixationDuration = 500;
 const linesDuration = 250;
-const imageryDuration = 4000;
+// const imageryDuration = 4000; // Imagery version retained.
+const perceptionDuration = 4000;
 const feedbackDuration = 1000;
 const maxResponseTime = 2000;
 const minResponseTime = 200;
 const linesDurationPractice = 1000; // Longer line viewing in practice round 1.
-const imageryDurationPractice = 5000;
+// const imageryDurationPractice = 5000; // Imagery version retained.
+const perceptionDurationPractice = 5000;
 
 const currentURL = window.location.href;
 const splitURL = currentURL.split("?")[1];
