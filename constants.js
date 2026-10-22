@@ -16,8 +16,14 @@ const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
 };
 
 // Experiment design parameters.
-const conditionPositions = {1: 'middle', 2: 'top', 3: 'behind'};
-const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per block, 192 total.
+const conditionPositions = {1: 'middle', 2: 'top', 3: 'behind'}; // Retained for the imagery version.
+const perceptionConditions = {
+    1: {occlusion: 'nothing', orientation: 'vertical'},
+    2: {occlusion: 'occluded', orientation: 'vertical'},
+    3: {occlusion: 'nothing', orientation: 'horizontal'},
+    4: {occlusion: 'occluded', orientation: 'horizontal'},
+};
+const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per block, 256 total.
 
 // Stimulus timing in milliseconds.
 const itiDuration = 500;

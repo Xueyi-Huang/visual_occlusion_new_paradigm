@@ -20,10 +20,10 @@ Math.seedrandom(subject_id); // Reproduce assignment and trial order for this pa
 
 const squareColor = Math.random() < 0.5 ? 'black' : 'white';
 const occluderColor = squareColor === 'black' ? 'white' : 'black';
-const blockOrder = shuffle([1, 2, 3]); // Randomized bar conditions: 1 = middle, 2 = top, 3 = behind.
+const blockOrder = shuffle([1, 2, 3, 4]); // 1: vertical/nothing, 2: vertical/occluded, 3: horizontal/nothing, 4: horizontal/occluded
 const firstBlockCondition = blockOrder[0];
 // Imagery version: const practiceImageryPosition = conditionPositions[firstBlockCondition];
-const practicePerceptionPosition = conditionPositions[firstBlockCondition];
+const practicePerceptionCondition = firstBlockCondition;
 const study_id = jsPsych.data.getURLVariable('STUDY_ID');
 const session_id = jsPsych.data.getURLVariable('SESSION_ID');
 const windowHeight = window.innerHeight;
@@ -60,11 +60,11 @@ let trials = [];
 let block1 = [];
 let block2 = [];
 let block3 = [];
+let block4 = [];
 let real_trial_num = 1;
 const timeline = [];
 let practice;
 let blockNum;
-const maxBlockNum = 3;
 
 // Imagery version: let practice_trials_1, practice_trials_2, practice_trials_3;
 // Imagery version: let practice_trials_block_2, practice_trials_block_3;
@@ -126,15 +126,16 @@ function buildExperimentTimeline() {
     // /* preload images */
     const preloadImages = {
         type: jsPsychPreload,
-        images: ['none', ...Object.values(conditionPositions)].flatMap(position => [
-            perceptionStimulus(position), ...linePairs.map(pair => perceptionStimulus(position, pair)),
+        images: Object.keys(perceptionConditions).flatMap(condition => [
+            perceptionStimulus(condition, null, false), perceptionStimulus(condition),
+            ...linePairs.map(pair => perceptionStimulus(condition, pair)),
         ]),
     };
     taskTimeline.push(preloadImages);
     if (jump_to_questionnaire !== 'on') {
         taskTimeline.push({
             type: jsPsychInstructions,
-            pages: perception_initial_instruction_pages(),
+            pages: perception_initial_instruction_pages(blockOrder.length),
             show_clickable_nav: true,
             data: {stage: 'initial_instructions'},
         });
@@ -175,21 +176,22 @@ function buildExperimentTimeline() {
         type: jsPsychImageKeyboardResponse,
         render_on_canvas: false,
         css_classes: ['trial-frame'],
-        stimulus: gridStimulus(),
+        stimulus: () => jsPsych.timelineVariable('squares_stimulus'),
         choices: 'NO_KEYS',
-        trial_duration: squaresDuration,
+        trial_duration: () => jsPsych.timelineVariable('squares_duration'),
         data: () => ({...jsPsych.timelineVariable('data'), stage: 'squares'}),
     };
     const perception_stage = {
-        type: jsPsychImageKeyboardResponse,
-        render_on_canvas: false,
-        css_classes: ['trial-frame'],
-        stimulus: () => jsPsych.timelineVariable('pre_probe_stimulus'),
-        choices: 'NO_KEYS',
-        prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-            ? '' : '<p>Look at the bar and squares</p>',
-        trial_duration: () => jsPsych.timelineVariable('pre_probe_duration'),
-        data: () => ({...jsPsych.timelineVariable('data'), stage: 'perception'}),
+        timeline: [{
+            type: jsPsychImageKeyboardResponse,
+            render_on_canvas: false,
+            css_classes: ['trial-frame'],
+            stimulus: () => jsPsych.timelineVariable('pre_probe_stimulus'),
+            choices: 'NO_KEYS',
+            trial_duration: () => jsPsych.timelineVariable('pre_probe_duration'),
+            data: () => ({...jsPsych.timelineVariable('data'), stage: 'perception'}),
+        }],
+        conditional_function: () => jsPsych.timelineVariable('data').occlusion === 'occluded',
     };
     function finishLineJudgment(data) {
         data.stage = 'judgment';
@@ -232,7 +234,6 @@ function buildExperimentTimeline() {
             choices: [keySame, keyDifferent],
             prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
                 ? '' : '<p>S = Same, D = Different</p>',
-            trial_duration: () => jsPsych.timelineVariable('response_duration'),
             response_ends_trial: true,
             data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
             on_load: function() {
@@ -407,7 +408,7 @@ function buildExperimentTimeline() {
 
     // Full-task practice: view the bar and judge line lengths.
     practice_trials = linePairs.slice(0, review_mode === 'on' ? 1 : linePairs.length)
-        .map(pair => generate_trial('practice_block_1', pair, 1, practicePerceptionPosition));
+        .map(pair => generate_trial('practice_block_1', pair, 1, practicePerceptionCondition));
     const practice_round = {
         // Imagery sequence: timeline: [iti, fixation, imagery_stage, lines_stage, test_stage, too_fast_warning, response_feedback, rating_stage],
         timeline: [iti, fixation, squares_stage, perception_stage, lines_stage, test_stage, too_fast_warning, response_feedback],
@@ -429,13 +430,12 @@ function buildExperimentTimeline() {
     practice = 'off';
 
     const blocks = [];
-    for (blockNum = 1; blockNum <= maxBlockNum; blockNum++) {
+    for (blockNum = 1; blockNum <= blockOrder.length; blockNum++) {
         const condition = blockOrder[blockNum - 1];
         const blockTrials = [];
         for (let repetition = 0; repetition < repeatTimes; repetition++) {
             for (const lineLengths of linePairs) {
-                const position = conditionPositions[condition];
-                blockTrials.push(generate_trial(practice, lineLengths, blockNum, position));
+                blockTrials.push(generate_trial(practice, lineLengths, blockNum, condition));
             }
         }
         shuffle(blockTrials);
@@ -447,7 +447,7 @@ function buildExperimentTimeline() {
         });
         blocks.push(blockTrials);
     }
-    [block1, block2, block3] = blocks;
+    [block1, block2, block3, block4] = blocks;
     trials = blocks.flat();
 
 // Per-block practice retained for the future imagery task.
@@ -536,22 +536,29 @@ function buildExperimentTimeline() {
     }
 */
 
-    function generate_trial(practice, lineLengths, blockNum, position) {
+    function generate_trial(practice, lineLengths, blockNum, conditionId) {
+        const {occlusion, orientation} = perceptionConditions[conditionId];
+        const barDuration = practice === 'off' ? perceptionDuration : perceptionDurationPractice;
         const isSame = lineLengths[0] === lineLengths[1];
         return {
-            stimulus: perceptionStimulus(position, lineLengths),
-            pre_probe_stimulus: perceptionStimulus(position),
-            pre_probe_duration: practice === 'off' ? perceptionDuration : perceptionDurationPractice,
-            presentation_duration: practice === 'practice_lines' ? linesDurationPractice : linesDuration,
-            response_duration: null, // Accuracy-focused task: wait for a response.
+            stimulus: perceptionStimulus(conditionId, lineLengths),
+            squares_stimulus: perceptionStimulus(conditionId, null, false),
+            pre_probe_stimulus: perceptionStimulus(conditionId),
+            // Nothing trials keep the squares on screen for both pre-probe intervals.
+            squares_duration: squaresDuration + (occlusion === 'nothing' ? barDuration : 0),
+            pre_probe_duration: barDuration,
+            presentation_duration: linesDuration,
             data: {
                 isPractice: practice,
                 real_trial_num: 0,
+                // First/second probes are left/right or top/bottom, respectively.
                 left_line_length_px: lineLengths[0],
                 right_line_length_px: lineLengths[1],
                 correct_response: isSame ? keySame : keyDifferent,
                 block_num: blockNum,
-                condition: practice === 'practice_lines' ? 'none' : position,
+                condition: `${occlusion}_${orientation}`,
+                occlusion,
+                orientation,
             },
         };
     }

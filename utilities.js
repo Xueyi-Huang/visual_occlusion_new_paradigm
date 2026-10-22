@@ -78,6 +78,7 @@ function createScreenCalibration(jsPsych) {
             const button = document.getElementById('calibration-continue');
             const message = document.getElementById('calibration-message');
             let adjusted = false;
+            let submitted = false;
             slider.max = Math.max(200, Math.min(800, window.innerWidth - 80));
             slider.value = Math.min(320, Number(slider.max));
             function update() {
@@ -92,6 +93,7 @@ function createScreenCalibration(jsPsych) {
             confirmation.addEventListener('change', update);
             update();
             button.addEventListener('click', function() {
+                if (submitted) return;
                 const cardWidthPx = card.getBoundingClientRect().width;
                 const pixelsPerCm = cardWidthPx / 8.56;
                 const cellSize = Math.round(2 * viewingDistanceCm * Math.tan(stimulusAngles.gridCell * Math.PI / 360) * pixelsPerCm);
@@ -105,6 +107,8 @@ function createScreenCalibration(jsPsych) {
                     pixels_per_cm: pixelsPerCm,
                 };
                 jsPsych.data.addProperties(calibration);
+                submitted = true;
+                button.disabled = true;
                 jsPsych.finishTrial({response: JSON.stringify(calibration)});
             });
         },
@@ -169,22 +173,35 @@ function gridStimulus(lineLengths = null) {
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
-// Render a physical bar with optional probes; squares occlude the bar in the behind condition.
-function perceptionStimulus(position, lineLengths = null) {
-    if (position === 'none') return gridStimulus(lineLengths);
-    const markup = decodeURIComponent(occluderIllustration(position).split(',')[1]);
-    let probes = '';
+// Render either orientation, with an optional physical bar and green probes.
+function perceptionStimulus(conditionId, lineLengths = null, showBar = true) {
+    const {occlusion, orientation} = perceptionConditions[conditionId];
+    const vertical = orientation === 'vertical';
+    const cell = gridCellSize;
+    const size = taskFrameSize;
+    let markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="lightgray"/>`;
+    for (const offset of [1, 3]) {
+        markup += `<rect x="${(vertical ? offset : 2) * cell}" y="${(vertical ? 2 : offset) * cell}" width="${cell}" height="${cell}" fill="${squareColor}"/>`;
+    }
+    for (let i = 1; i < 5; i++) {
+        const coordinate = i * cell;
+        markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="${gridLineWidth}" stroke-dasharray="5 5"/>`;
+    }
+    if (showBar && occlusion === 'occluded') {
+        markup += `<rect x="${(vertical ? 2 : 1) * cell}" y="${(vertical ? 1 : 2) * cell}" width="${(vertical ? 1 : 3) * cell}" height="${(vertical ? 3 : 1) * cell}" fill="${occluderColor}"/>`;
+    }
     if (lineLengths) {
         lineLengths.forEach((length, index) => {
-            const x = (index === 0 ? 1.5 : 3.5) * gridCellSize;
-            const y = taskFrameSize / 2;
-            probes += `<line x1="${x}" y1="${y - length / 2}" x2="${x}" y2="${y + length / 2}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
+            const offset = (index === 0 ? 1.5 : 3.5) * cell;
+            const x = vertical ? offset : size / 2;
+            const y = vertical ? size / 2 : offset;
+            markup += `<line x1="${x - (vertical ? 0 : length / 2)}" y1="${y - (vertical ? length / 2 : 0)}" x2="${x + (vertical ? 0 : length / 2)}" y2="${y + (vertical ? length / 2 : 0)}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
         });
     }
-    return svgDataUrl(markup.replace('</svg>', probes + '</svg>'));
+    return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
-// Bar geometry is shared by perception displays and the retained imagery illustrations.
+// Build the retained imagery illustrations.
 function occluderIllustration(position = 'middle') {
     const markup = decodeURIComponent(gridStimulus().split(',')[1]);
     const cell = gridCellSize;

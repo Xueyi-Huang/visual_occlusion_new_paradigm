@@ -272,28 +272,35 @@ const screen_calibration_text = `<div class="instructions left-aligned">
 </div>`;
 
 
-function perception_initial_instruction_pages() {
+function perception_initial_instruction_pages(numBlocks) {
     return [
         instructionPage(`<p>While reading the instructions, you can return to previous pages using the <strong>"Previous"</strong> button below.</p>
             <p><strong>Do not use your browser's "Back" button</strong> during the experiment unless you wish to stop participating.</p>`),
         instructionPage(`<p>Welcome! Thanks for helping us better understand how people's vision works.</p>
             <p>Your task is to judge <strong>whether two lines have the same or different lengths</strong>.</p>
-            <p>First, you'll read the instructions and complete some practice. Then you'll complete three blocks, followed by a few questions about the study.</p>
+            <p>First, you'll read the instructions and complete some practice. Then you'll complete ${numBlocks} blocks, followed by a few questions about the study.</p>
             <p>Click "Next" to learn the task.</p>`),
     ];
 }
 
 // Active perception instructions: the bar is physically visible, with no imagery rating.
 function perceptionDescription(conditionId) {
-    return {
-        1: `A ${occluderColor} bar stands upright between the two ${squareColor} squares, covering the middle three grid cells.`,
-        2: `A ${occluderColor} bar lies across the three grid cells just above the two ${squareColor} squares.`,
-        3: `A ${occluderColor} bar runs across the whole middle row, behind the two ${squareColor} squares. The squares hide the parts behind them.`,
-    }[conditionId];
+    const {occlusion, orientation} = perceptionConditions[conditionId];
+    const squares = orientation === 'vertical' ? 'on the left and right' : 'at the top and bottom';
+    const bar = orientation === 'vertical' ? 'upright' : 'sideways';
+    return `The two ${squareColor} squares are ${squares}. ` + (occlusion === 'occluded'
+        ? `A ${occluderColor} bar lies ${bar} between them, covering the middle three grid cells.`
+        : 'No bar appears between them.');
+}
+
+function perceptionSequenceDescription(conditionId) {
+    return perceptionConditions[conditionId].occlusion === 'occluded'
+        ? 'The two squares appear first, then the bar. The bar stays visible when the green lines appear.'
+        : 'The two squares stay on screen, then the green lines appear inside them.';
 }
 
 function perceptionExample(conditionId, lengths = null) {
-    return instructionImage(perceptionStimulus(conditionPositions[conditionId], lengths), 'The visible bar and squares');
+    return instructionImage(perceptionStimulus(conditionId, lengths), 'The display in this block');
 }
 
 function initializePerceptionInstructions() {
@@ -301,9 +308,9 @@ function initializePerceptionInstructions() {
         <p>Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
     full_practice_pages = [
         fixationInstruction(),
-        instructionPage(`<p>After the cross, you'll first see a grid with two ${squareColor} squares.</p>${instructionImage(gridStimulus(), 'The two squares before the bar appears')}`),
-        instructionPage(`<p>Next, a ${occluderColor} bar appears while the squares stay in place.</p><p>${perceptionDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
-        instructionPage(`${response_instructions}<p>The bar stays visible while the lines appear. These lines have the <strong>same length</strong>, so press "${keySame}".</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
+        instructionPage(`<p>After the cross, you'll first see a grid with two ${squareColor} squares.</p>${instructionImage(perceptionStimulus(firstBlockCondition, null, false), 'The two squares')}`),
+        instructionPage(`<p>${perceptionSequenceDescription(firstBlockCondition)}</p><p>${perceptionDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
+        instructionPage(`${response_instructions}<p>These lines have the <strong>same length</strong>, so press "${keySame}".</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
         instructionPage(`<p>These lines have <strong>different lengths</strong>, so press "${keyDifferent}".</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
         instructionPage(`${practiceStartText()}`),
     ];
@@ -318,13 +325,13 @@ function afterBlockPracticeText(conditionId) {
 
 function blockInstructionPages(conditionId, blockNum) {
     const reminder = instructionPage(`<p>${perceptionDescription(conditionId)}</p>${perceptionExample(conditionId)}
-        <p>The two squares appear first, then the bar. The bar stays visible when the green lines appear. Judge only the line lengths.</p>${response_instructions}`);
+        <p>${perceptionSequenceDescription(conditionId)} Judge only the line lengths.</p>${response_instructions}`);
     if (blockNum === 1) {
         return [instructionPage('<p><strong>Well done!</strong> You are ready for the first main block.</p>'), reminder,
             instructionPage('<p>Main trials do not show correct/incorrect feedback. Click "Next" when ready.</p>')];
     }
     return [
-        instructionPage(`<p>Welcome to ${blockNum === maxBlockNum ? 'the final block' : `block ${blockNum}`}!</p><p>The bar changes position in this block. You can take a short break here.</p>`),
+        instructionPage(`<p>Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}!</p><p>The display changes in this block. You can take a short break here.</p>`),
         reminder,
         instructionPage(`<p>Focus on judging the line lengths accurately. You won't be told whether your answers are correct. Go back now if you want to reread anything, or click "Next" to start the main trials.</p>`),
     ];
