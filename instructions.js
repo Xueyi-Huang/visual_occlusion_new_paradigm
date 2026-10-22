@@ -2,7 +2,7 @@ const wellcome_text = '<p>This experiment runs in fullscreen. Please do not exit
 '<p>Please wait for a few seconds after you click the button. </p></div>';
 const block_text = 'This study requires a display running at 60 Hz or faster. Please refresh the page or use another display.';
 const good_frame_text = '<p>Display check complete. Click "Next" to read the instructions.</p>';
-let response_instructions, rating_instructions, line_practice_pages, imagery_practice_pages, full_practice_pages;
+let response_instructions, full_practice_pages;
 
 // Build color-dependent text after participant assignment in experiment.js.
 function instructionImage(source, description) {
@@ -25,38 +25,6 @@ function fixationInstruction() {
         ${instructionImage(illustration, 'Fixation cross centered in the box')}`);
 }
 
-// Original imagery practice instructions retained for future use.
-/*
-function initializeTaskInstructions() {
-    response_instructions = `<p>Your task is to determine <strong>whether the two green lines have the same or different lengths</strong>.</p>
-        <p>You will need to press <strong>"${keySame}"</strong> if they are the same length, or <strong>"${keyDifferent}"</strong> if they are different lengths.</p>`;
-    rating_instructions = `<p>Then, you will be asked to <strong>rate how vivid your mental image was</strong>.</p>
-        <p>Rate each trial <strong>based on your experience during that specific one</strong>, independently of how you've rated other trials. Choose 1 if you could not form an image, and 5 if it was as vivid as actually seeing the bar.</p>`;
-    line_practice_pages = [
-        instructionPage(`<p>${skip_vviq === 'off' ? 'Thanks for the help. And welcome to the experiment part!' : 'Welcome! Thanks for helping us better understand how vision and imagination work.'}</p>
-            <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths accurately</strong>.</p>`),
-        fixationInstruction(),
-        instructionPage(`${response_instructions}<p>In this example, the lines are the same length. You'd press <strong>"${keySame}"</strong>.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Two equally short green lines')}`),
-        instructionPage(`<p>The two lines in this example have different lengths. You'd press <strong>"${keyDifferent}"</strong>.</p>${instructionImage(gridStimulus([shortLine, longLine]), 'Short left line and long right line')}`),
-        instructionPage(practiceStartText()),
-    ];
-    imagery_practice_pages = [
-        instructionPage(`<p>Well done!</p><p>Next, you will practice <strong>imagining a bar as vividly as you can</strong> and rating your mental image.</p>`),
-        fixationInstruction(),
-        ...imageryInstructionPages(firstBlockCondition),
-        instructionPage(rating_instructions),
-        instructionPage(`<p>Let's practice imagining and rating the bar.</p><p>Please really try your best to <strong>imagine the bar as vividly as possible until the next screen appears</strong>.</p><p>Keep your right hand on your mouse or trackpad to click your rating.</p><p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p><p>If you are ready, click "Next" to start practice.</p>`),
-    ];
-    full_practice_pages = [
-        instructionPage(`<p>Well done!</p><p>Now, let's <strong>combine the imagination task with the same/different task</strong>. Click "Next" to read the complete procedure.</p>`),
-        fixationInstruction(),
-        ...imageryInstructionPages(firstBlockCondition),
-        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible until the two green lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible green lines')}`),
-        instructionPage(rating_instructions),
-        instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p>${practiceStartText()}`),
-    ];
-}
-*/
 const thank_you_text = '<p>Thank you for completing the task! A few brief questionnaires are all that remain.</p><p>Press "Space" to continue.</p>';
 const buffer_text = '<p>Thank you for participating! Please allow 3 seconds for the data to be downloaded, and then click "Submit" to proceed to the debriefing page.</p>';
 
@@ -160,8 +128,127 @@ function toggleSpecifyInput() {
     }
 }
 
-// Original imagery/VVIQ introduction retained for future use.
+const screen_calibration_text = `<div class="instructions left-aligned">
+    <h2>Match your screen to a card</h2>
+    <p><strong>We do this to keep the visual display the same physical size for all participants.</strong></p>
+    <p>Use a <strong>standard bank card</strong> (85.6 × 53.98 mm, or 3.375 × 2.125 in). Hold it against your screen and move the slider until the rectangle's <strong>outside edges match the card</strong>.</p>
+    <p>After matching, put the card away and sit about <strong>${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) from the screen. <strong>Keep this distance throughout the task, and do not change browser zoom or switch screens</strong> so that the display appear a consistent size for you across the study.</p>
+    <br>
+    <div id="calibration-card" style="width:320px;aspect-ratio:85.6 / 53.98;border:2px solid black;box-sizing:border-box;background:white;margin:24px auto;"></div>
+    <input id="card-size-slider" type="range" min="120" max="600" step="1" value="320" style="display:block; width:60%; margin:20px auto;">
+    <p><label><input id="calibration-distance" type="checkbox"> <strong>I've matched the card and will sit about ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</strong></label></p>
+    <br>
+    <button id="calibration-continue" class="jspsych-btn" disabled>Continue</button>
+    <p id="calibration-message" role="status" aria-live="polite"></p>
+</div>`;
+
+function perception_initial_instruction_pages(numBlocks) {
+    return [
+        instructionPage(`<p>While reading the instructions, you can return to previous pages using the <strong>"Previous"</strong> button below.</p>
+            <p><strong>Do not use your browser's "Back" button</strong> unless you wish to stop participating.</p>`),
+        instructionPage(`<p>Welcome! Thanks for helping us better understand how people's vision works.</p>
+            <p>Your task is to judge <strong>whether two lines have the same or different lengths</strong>.</p>
+            <p>First, you'll read the instructions and complete some practice. Then you'll complete ${numBlocks} blocks, followed by a few questions about the study.</p>
+            <p>Click "Next" to learn the task.</p>`),
+    ];
+}
+
+// Active perception instructions: the bar is physically visible, with no imagery rating.
+function perceptionDescription(conditionId) {
+    const {occlusion, orientation} = perceptionConditions[conditionId];
+    const squares = orientation === 'vertical' ? 'on the left and right' : 'at the top and bottom';
+    const bar = orientation === 'vertical' ? 'upright' : 'sideways';
+    return `The two ${squareColor} squares are ${squares}. ` + (occlusion === 'occluded'
+        ? `A ${occluderColor} bar lies ${bar} between them, covering the middle three grid cells.`
+        : '');
+}
+
+function perceptionSequenceDescription(conditionId) {
+    return perceptionConditions[conditionId].occlusion === 'occluded'
+        ? `Then, a ${occluderColor} bar appears, covering the middle three grid cells between the two squares.`
+        : 'The two squares stay on screen, then the green lines appear inside them.';
+}
+
+function perceptionExample(conditionId, lengths = null) {
+    return instructionImage(perceptionStimulus(conditionId, lengths), 'The display in this block');
+}
+
+function initializePerceptionInstructions() {
+    response_instructions = `<p>Finally, two green lines will appear in the two squares.</p><p>Your task is to judge <strong>whether they have the same or different lengths</strong>. Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
+    full_practice_pages = [
+        fixationInstruction(),
+        instructionPage(`<p>Next, you'll see a grid with two ${squareColor} squares.</p>${instructionImage(perceptionStimulus(firstBlockCondition, null, false), 'The two squares')}`),
+        ...(perceptionConditions[firstBlockCondition].occlusion === 'occluded' ? [
+            instructionPage(`<p>${perceptionSequenceDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
+        ] : []),
+        instructionPage(`${response_instructions}<p>In this example, the lines have the <strong>same length</strong>, so you'll need to press <strong>"${keySame}"</strong>.</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
+        instructionPage(`<p>These lines in this example have <strong>different lengths</strong>, so you'll need to press <strong>"${keyDifferent}"</strong>.</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
+        instructionPage(`${practiceStartText()}`),
+    ];
+}
+
+function blockInstructionPages(conditionId, blockNum) {
+    const pages = [];
+    if (blockNum > 1) {
+        pages.push(instructionPage(`<p>Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}!</p>
+            <p>The display will be slightly different from the previous block.</p>${perceptionExample(conditionId, [shortLine, longLine])}
+            <p>Each trial starts with a cross, followed by two ${squareColor} squares ${perceptionConditions[conditionId].orientation === 'vertical' ? 'on the left and right' : 'at the top and bottom'}.
+            ${perceptionConditions[conditionId].occlusion === 'occluded'
+                ? `Next, a ${occluderColor} bar appears between the squares, followed by the green lines.`
+                : 'Then, two green lines briefly appear inside the squares. '}
+            Your task is to <strong>judge whether the lines have the same or different lengths</strong>.</p>`));
+    }
+    pages.push(instructionPage(`${blockNum === 1
+        ? '<p><strong>Well done!</strong> You are ready for the real trials.</p>'
+        : ''}
+        <p>Reminder: Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>
+        ${blockNum === 1 ? `<p>The lines appear for less time than in practice, so the task may be difficult. There's no need to restart the study or return your submission even if you feel you are not doing well, <strong>but please try your best to judge the line lengths accurately</strong>. Main trials do not show correct/incorrect feedback.</p>`
+            : '<p><strong>Please try your best to judge the line lengths accurately</strong>.</p>'}
+        <p>Please sit back and stay about <strong>${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> from the screen throughout the study.</p>
+        <p>Click "Next" when you're ready to start. Good luck!</p>`));
+    return pages;
+}
+
 /*
+RETAINED IMAGERY VERSION — inactive reference code.
+These fragments originally appeared at different points in the timeline.
+Restore each section to its appropriate scope when rebuilding the imagery task.
+
+// Additional variables for the imagery instructions.
+let rating_instructions, line_practice_pages, imagery_practice_pages;
+
+// Original imagery practice instructions retained for future use.
+function initializeTaskInstructions() {
+    response_instructions = `<p>Your task is to determine <strong>whether the two green lines have the same or different lengths</strong>.</p>
+        <p>You will need to press <strong>"${keySame}"</strong> if they are the same length, or <strong>"${keyDifferent}"</strong> if they are different lengths.</p>`;
+    rating_instructions = `<p>Then, you will be asked to <strong>rate how vivid your mental image was</strong>.</p>
+        <p>Rate each trial <strong>based on your experience during that specific one</strong>, independently of how you've rated other trials. Choose 1 if you could not form an image, and 5 if it was as vivid as actually seeing the bar.</p>`;
+    line_practice_pages = [
+        instructionPage(`<p>${skip_vviq === 'off' ? 'Thanks for the help. And welcome to the experiment part!' : 'Welcome! Thanks for helping us better understand how vision and imagination work.'}</p>
+            <p>There are two types of tasks in this study. Your first task is to determine <strong>whether two lines have the same or different lengths accurately</strong>.</p>`),
+        fixationInstruction(),
+        instructionPage(`${response_instructions}<p>In this example, the lines are the same length. You'd press <strong>"${keySame}"</strong>.</p>${instructionImage(gridStimulus([shortLine, shortLine]), 'Two equally short green lines')}`),
+        instructionPage(`<p>The two lines in this example have different lengths. You'd press <strong>"${keyDifferent}"</strong>.</p>${instructionImage(gridStimulus([shortLine, longLine]), 'Short left line and long right line')}`),
+        instructionPage(practiceStartText()),
+    ];
+    imagery_practice_pages = [
+        instructionPage(`<p>Well done!</p><p>Next, you will practice <strong>imagining a bar as vividly as you can</strong> and rating your mental image.</p>`),
+        fixationInstruction(),
+        ...imageryInstructionPages(firstBlockCondition),
+        instructionPage(rating_instructions),
+        instructionPage(`<p>Let's practice imagining and rating the bar.</p><p>Please really try your best to <strong>imagine the bar as vividly as possible until the next screen appears</strong>.</p><p>Keep your right hand on your mouse or trackpad to click your rating.</p><p>You won't be able to return to these instructions once you've started practice, so <strong>go back now if you want to reread anything</strong>.</p><p>If you are ready, click "Next" to start practice.</p>`),
+    ];
+    full_practice_pages = [
+        instructionPage(`<p>Well done!</p><p>Now, let's <strong>combine the imagination task with the same/different task</strong>. Click "Next" to read the complete procedure.</p>`),
+        fixationInstruction(),
+        ...imageryInstructionPages(firstBlockCondition),
+        instructionPage(`<p>Keep imagining the bar <strong>as vividly as possible until the two green lines appear</strong>. Compare the lengths of the visible lines.</p>${response_instructions}${instructionImage(gridStimulus([shortLine, shortLine]), 'Example of the visible green lines')}`),
+        instructionPage(rating_instructions),
+        instructionPage(`<p>Please really try your best to <strong>imagine the bar and keep it in mind</strong>, and focus on judging the line lengths <strong>accurately</strong>.</p>${practiceStartText()}`),
+    ];
+}
+
+// Original imagery/VVIQ introduction retained for future use.
 function initial_instruction_pages() {
     return [
         "<div class='instructions left-aligned'>" +
@@ -195,10 +282,8 @@ function initial_instruction_pages() {
         "</div>",
     ];
 };
-*/
 
 // Original imagery block instructions retained for future use.
-/*
 // Block-specific imagery instructions and examples.
 function imageryDescription(conditionId) {
     const descriptions = {
@@ -258,91 +343,3 @@ function blockInstructionPages(conditionId, blockNum) {
     ];
 }
 */
-const screen_calibration_text = `<div class="instructions left-aligned">
-    <h2>Match your screen to a card</h2>
-    <p><strong>We do this to keep the visual display the same physical size for all participants.</strong></p>
-    <p>Use a <strong>standard bank card</strong> (85.6 × 53.98 mm, or 3.375 × 2.125 in). Hold it against your screen and move the slider until the rectangle's <strong>outside edges match the card</strong>.</p>
-    <p>After matching, put the card away and sit about <strong>${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) from the screen. <strong>Keep this distance throughout the task, and do not change browser zoom or switch screens</strong> so that the display appear a consistent size for you across the study.</p>
-    <br>
-    <div id="calibration-card" style="width:320px;aspect-ratio:85.6 / 53.98;border:2px solid black;box-sizing:border-box;background:white;margin:24px auto;"></div>
-    <input id="card-size-slider" type="range" min="120" max="600" step="1" value="320" style="display:block; width:60%; margin:20px auto;">
-    <p><label><input id="calibration-distance" type="checkbox"> <strong>I've matched the card and will sit about ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</strong></label></p>
-    <br>
-    <button id="calibration-continue" class="jspsych-btn" disabled>Continue</button>
-    <p id="calibration-message" role="status" aria-live="polite"></p>
-</div>`;
-
-
-function perception_initial_instruction_pages(numBlocks) {
-    return [
-        instructionPage(`<p>While reading the instructions, you can return to previous pages using the <strong>"Previous"</strong> button below.</p>
-            <p><strong>Do not use your browser's "Back" button</strong> unless you wish to stop participating.</p>`),
-        instructionPage(`<p>Welcome! Thanks for helping us better understand how people's vision works.</p>
-            <p>Your task is to judge <strong>whether two lines have the same or different lengths</strong>.</p>
-            <p>First, you'll read the instructions and complete some practice. Then you'll complete ${numBlocks} blocks, followed by a few questions about the study.</p>
-            <p>Click "Next" to learn the task.</p>`),
-    ];
-}
-
-// Active perception instructions: the bar is physically visible, with no imagery rating.
-function perceptionDescription(conditionId) {
-    const {occlusion, orientation} = perceptionConditions[conditionId];
-    const squares = orientation === 'vertical' ? 'on the left and right' : 'at the top and bottom';
-    const bar = orientation === 'vertical' ? 'upright' : 'sideways';
-    return `The two ${squareColor} squares are ${squares}. ` + (occlusion === 'occluded'
-        ? `A ${occluderColor} bar lies ${bar} between them, covering the middle three grid cells.`
-        : '');
-}
-
-function perceptionSequenceDescription(conditionId) {
-    return perceptionConditions[conditionId].occlusion === 'occluded'
-        ? `Then, a ${occluderColor} bar appears, covering the middle three grid cells between the two squares.`
-        : 'The two squares stay on screen, then the green lines appear inside them.';
-}
-
-function perceptionExample(conditionId, lengths = null) {
-    return instructionImage(perceptionStimulus(conditionId, lengths), 'The display in this block');
-}
-
-function initializePerceptionInstructions() {
-    response_instructions = `<p>Finally, two green lines will appear in the two squares.</p><p>Your task is to judge <strong>whether they have the same or different lengths</strong>. Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
-    full_practice_pages = [
-        fixationInstruction(),
-        instructionPage(`<p>Next, you'll see a grid with two ${squareColor} squares.</p>${instructionImage(perceptionStimulus(firstBlockCondition, null, false), 'The two squares')}`),
-        ...(perceptionConditions[firstBlockCondition].occlusion === 'occluded' ? [
-            instructionPage(`<p>${perceptionSequenceDescription(firstBlockCondition)}</p>${perceptionExample(firstBlockCondition)}`),
-        ] : []),
-        instructionPage(`${response_instructions}<p>In this example, the lines have the <strong>same length</strong>, so you'll need to press <strong>"${keySame}"</strong>.</p>${perceptionExample(firstBlockCondition, [shortLine, shortLine])}`),
-        instructionPage(`<p>These lines in this example have <strong>different lengths</strong>, so you'll need to press <strong>"${keyDifferent}"</strong>.</p>${perceptionExample(firstBlockCondition, [shortLine, longLine])}`),
-        instructionPage(`${practiceStartText()}`),
-    ];
-}
-
-function afterBlockPracticeText(conditionId) {
-    return instructionPage(`<p><strong>Well done!</strong> Practice is complete. The main trials use the same display.</p>
-        <p>${perceptionDescription(conditionId)}</p>${perceptionExample(conditionId)}
-        <p>Focus on judging the line lengths <strong>accurately</strong>. You won't be told whether your answers are correct during the main trials.</p>
-        <p>Press "Space" when you're ready to start.</p>`);
-}
-
-function blockInstructionPages(conditionId, blockNum) {
-    const pages = [];
-    if (blockNum > 1) {
-        pages.push(instructionPage(`<p>Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}!</p>
-            <p>The display will be slightly different from the previous block.</p>${perceptionExample(conditionId, [shortLine, longLine])}
-            <p>Each trial starts with a cross, followed by two ${squareColor} squares ${perceptionConditions[conditionId].orientation === 'vertical' ? 'on the left and right' : 'at the top and bottom'}.
-            ${perceptionConditions[conditionId].occlusion === 'occluded'
-                ? `Next, a ${occluderColor} bar appears between the squares, followed by the green lines.`
-                : 'Then, two green lines briefly appear inside the squares. '}
-            Your task is to <strong>judge whether the lines have the same or different lengths</strong>.</p>`));
-    }
-    pages.push(instructionPage(`${blockNum === 1
-        ? '<p><strong>Well done!</strong> You are ready for the real trials.</p>'
-        : ''}
-        <p>Reminder: Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>
-        ${blockNum === 1 ? `<p>The lines appear for less time than in practice, so the task may be difficult. There's no need to restart the study or return your submission even if you feel you are not doing well, <strong>but please try your best to judge the line lengths accurately</strong>. Main trials do not show correct/incorrect feedback.</p>`
-            : '<p><strong>Please try your best to judge the line lengths accurately</strong>.</p>'}
-        <p>Please sit back and stay about <strong>${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> from the screen throughout the study.</p>
-        <p>Click "Next" when you're ready to start. Good luck!</p>`));
-    return pages;
-}
