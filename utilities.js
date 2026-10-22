@@ -25,13 +25,13 @@ function estimate_frame_duration(callback, duration, trim) {
     function done() {
         let toSum = null;
         if (trim) {
-            const sorted = frames.sort();
+            const sorted = frames.sort((a, b) => a - b);
             toSum = sorted.slice(Math.round(sorted.length*0.1), Math.round(sorted.length*0.9));
         } else {
             toSum = frames;
         }
-        const sum = toSum.reduce(function(total, num) { return total + num; });
-        callback(sum / toSum.length);
+        const sum = toSum.reduce(function(total, num) { return total + num; }, 0);
+        callback(toSum.length ? sum / toSum.length : null);
     }
 }
 
@@ -79,7 +79,7 @@ function createScreenCalibration(jsPsych) {
             const message = document.getElementById('calibration-message');
             let adjusted = false;
             let submitted = false;
-            slider.max = Math.max(200, Math.min(800, window.innerWidth - 80));
+            slider.max = Math.max(Number(slider.min), Math.min(Number(slider.max), window.innerWidth - 80));
             slider.value = Math.min(320, Number(slider.max));
             function update() {
                 card.style.width = `${slider.value}px`;
@@ -98,7 +98,10 @@ function createScreenCalibration(jsPsych) {
                 const pixelsPerCm = cardWidthPx / 8.56;
                 const cellSize = Math.round(2 * viewingDistanceCm * Math.tan(stimulusAngles.gridCell * Math.PI / 360) * pixelsPerCm);
                 const frameSize = cellSize * 5;
-                if (frameSize > Math.min(window.innerWidth - 48, window.innerHeight - 180)) {
+                if (frameSize > Math.min(
+                    window.innerWidth - 2 * trialLayout.horizontalMargin,
+                    window.innerHeight - 2 * trialLayout.promptSpace
+                )) {
                     message.textContent = 'The task display would not fit this window. Please check the card match and maximize your window, or use a larger screen.';
                     return;
                 }
@@ -143,6 +146,8 @@ function applyScreenCalibration(pixelsPerCm) {
     document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
     document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
     document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
+    document.documentElement.style.setProperty('--task-prompt-space', `${trialLayout.promptSpace}px`);
+    document.documentElement.style.setProperty('--task-side-margin', `${trialLayout.horizontalMargin}px`);
 }
 
 // Build the outer SVG border, inset so its full thickness stays inside the image.

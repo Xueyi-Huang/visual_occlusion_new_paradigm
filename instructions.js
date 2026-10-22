@@ -6,7 +6,7 @@ let response_instructions, rating_instructions, line_practice_pages, imagery_pra
 
 // Build color-dependent text after participant assignment in experiment.js.
 function instructionImage(source, description) {
-    return `<img src="${source}" alt="${description}" style="width:${taskFrameSize}px;max-width:100%;height:auto;display:block;margin:16px auto;">`;
+    return `<img src="${source}" alt="${description}" style="width:${Math.round(taskFrameSize * 0.8)}px;max-width:100%;height:auto;display:block;margin:16px auto;">`;
 }
 
 function instructionPage(content) {
@@ -276,7 +276,7 @@ const screen_calibration_text = `<div class="instructions left-aligned">
 function perception_initial_instruction_pages(numBlocks) {
     return [
         instructionPage(`<p>While reading the instructions, you can return to previous pages using the <strong>"Previous"</strong> button below.</p>
-            <p><strong>Do not use your browser's "Back" button</strong> during the experiment unless you wish to stop participating.</p>`),
+            <p><strong>Do not use your browser's "Back" button</strong> unless you wish to stop participating.</p>`),
         instructionPage(`<p>Welcome! Thanks for helping us better understand how people's vision works.</p>
             <p>Your task is to judge <strong>whether two lines have the same or different lengths</strong>.</p>
             <p>First, you'll read the instructions and complete some practice. Then you'll complete ${numBlocks} blocks, followed by a few questions about the study.</p>
@@ -326,13 +326,23 @@ function afterBlockPracticeText(conditionId) {
 }
 
 function blockInstructionPages(conditionId, blockNum) {
-    const welcome = blockNum === 1
-        ? '<strong>Well done!</strong> You are ready for the real trials.'
-        : `Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}! You can take a short break here.`;
-    return [instructionPage(`<p>${welcome}</p>
+    const pages = [];
+    if (blockNum > 1) {
+        pages.push(instructionPage(`<p>Welcome to ${blockNum === blockOrder.length ? 'the final block' : `block ${blockNum}`}!</p>
+            <p>The display will be slightly different from the previous block.</p>${perceptionExample(conditionId, [shortLine, longLine])}
+            <p>Each trial starts with a cross, followed by two ${squareColor} squares ${perceptionConditions[conditionId].orientation === 'vertical' ? 'on the left and right' : 'at the top and bottom'}.
+            ${perceptionConditions[conditionId].occlusion === 'occluded'
+                ? `Next, a ${occluderColor} bar appears between the squares, followed by the green lines.`
+                : 'Then, two green lines briefly appear inside the squares. '}
+            Your task is to <strong>judge whether the lines have the same or different lengths</strong>.</p>`));
+    }
+    pages.push(instructionPage(`${blockNum === 1
+        ? '<p><strong>Well done!</strong> You are ready for the real trials.</p>'
+        : ''}
         <p>Reminder: Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>
-        <p>The lines appear for less time than in practice, so the task may be difficult. There's no need to restart the study or return your submission even if you feel you are not doing well, <strong>but please try your best to judge the line lengths accurately</strong>. Main trials do not show correct/incorrect feedback.</p>
-        <p>Please sit back and stay about <strong>${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> from the screen throughout the task.</p>
-        <p>Click "Next" when you're ready to start. Good luck!</p>`)];
+        ${blockNum === 1 ? `<p>The lines appear for less time than in practice, so the task may be difficult. There's no need to restart the study or return your submission even if you feel you are not doing well, <strong>but please try your best to judge the line lengths accurately</strong>. Main trials do not show correct/incorrect feedback.</p>`
+            : '<p><strong>Please try your best to judge the line lengths accurately</strong>.</p>'}
+        <p>Please sit back and stay about <strong>${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> from the screen throughout the study.</p>
+        <p>Click "Next" when you're ready to start. Good luck!</p>`));
+    return pages;
 }
-

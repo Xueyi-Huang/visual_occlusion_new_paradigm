@@ -7,6 +7,7 @@ const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
 // Display setup:
 const viewingDistanceCm = 50;
 const labScreenHeightCm = 35; // No need to calibrate the display if the participant is in the lab, so we can use the known screen height to set the scale.
+const trialLayout = {horizontalMargin: 24, promptSpace: 90}; // CSS pixels around the centered grid.
 const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
     gridCell: 3,
     shortLine: 0.72,
@@ -29,7 +30,7 @@ const repeatTimes = 16; // Four line pairs × 16 repetitions = 64 trials per blo
 const itiDuration = 500;
 const fixationDuration = 500;
 const squaresDuration = 1000; // Squares-only display before the occluder bar appears.
-const perceptionDuration = 1000;  // The occluder bar appears.
+const perceptionDuration = 2000;  // The occluder bar appears.
 const linesDuration = 250;
 // const imageryDuration = 4000; // Imagery version retained.
 const feedbackDuration = 1000;  // Only for practice trials.

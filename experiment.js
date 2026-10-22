@@ -77,28 +77,38 @@ const fullscreen_on = {
     button_label: 'Begin',
     fullscreen_mode: true,
     on_start: function() {
+        $('#progressContainer').hide();
+    },
+};
+timeline.push(fullscreen_on);
+
+// Measure only after fullscreen has completed; continue when sampling finishes.
+const frame_duration_check = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: '<p>Please wait while we check your display.</p>',
+    choices: 'NO_KEYS',
+    data: {stage: 'frame_duration_check'},
+    on_load: function() {
         estimate_frame_duration(function(frameDurationMs) {
             frame_duration = frameDurationMs;
             jsPsych.data.addProperties({frame_duration});
-            console.log('Estimated frame duration (ms): ', frameDurationMs);
+            jsPsych.finishTrial();
         }, 5000, true);
-        $('#progressContainer').hide();
     },
-    post_trial_gap: 5000,
 };
-timeline.push(fullscreen_on);
+timeline.push(frame_duration_check);
 
 const frame_duration_exclusion = {
     type: jsPsychInstructions,
     pages: function() {
-        if (frame_duration < 17) {
+        if (Number.isFinite(frame_duration) && frame_duration > 0 && frame_duration < 17) {
             return [good_frame_text];
         } else {
             return [block_text];
         }
     },
     show_clickable_nav: function() {
-        if (frame_duration < 17) {
+        if (Number.isFinite(frame_duration) && frame_duration > 0 && frame_duration < 17) {
             return true;
         } else {
             return false;
@@ -181,7 +191,7 @@ function buildExperimentTimeline() {
         trial_duration: () => jsPsych.timelineVariable('squares_duration'),
         data: () => ({...jsPsych.timelineVariable('data'), stage: 'squares'}),
     };
-    const perception_stage = {
+    const perception_stage = {  // Show the occluder bar. For "nothing" trials, the squares remain in place for the same duration.
         timeline: [{
             type: jsPsychImageKeyboardResponse,
             render_on_canvas: false,
@@ -191,7 +201,6 @@ function buildExperimentTimeline() {
             trial_duration: () => jsPsych.timelineVariable('pre_probe_duration'),
             data: () => ({...jsPsych.timelineVariable('data'), stage: 'perception'}),
         }],
-        conditional_function: () => jsPsych.timelineVariable('data').occlusion === 'occluded',
     };
     function finishLineJudgment(data) {
         data.stage = 'judgment';
@@ -204,7 +213,6 @@ function buildExperimentTimeline() {
         }
         if (save_data_locally !== 'on') saveData();
     }
-
     const lines_stage = {
         type: jsPsychImageKeyboardResponse,
         render_on_canvas: false,
@@ -524,8 +532,8 @@ function buildExperimentTimeline() {
             data: {
                 isPractice: practice,
                 real_trial_num: 0,
-                left_line_length_px: lineLengths[0],
-                right_line_length_px: lineLengths[1],
+                line_1_length_px: lineLengths[0],
+                line_2_length_px: lineLengths[1],
                 correct_response: isSame ? keySame : keyDifferent,
                 block_num: blockNum,
                 condition: practice === 'practice_lines' ? 'none' : position,
@@ -542,19 +550,16 @@ function buildExperimentTimeline() {
             stimulus: perceptionStimulus(conditionId, lineLengths),
             squares_stimulus: perceptionStimulus(conditionId, null, false),
             pre_probe_stimulus: perceptionStimulus(conditionId),
-            // Nothing trials keep the squares on screen for both pre-probe intervals.
-            squares_duration: squaresDuration + (occlusion === 'nothing' ? barDuration : 0),
+            squares_duration: squaresDuration,
             pre_probe_duration: barDuration,
             presentation_duration: practice === 'off' ? linesDuration : linesDurationPractice,
             data: {
                 isPractice: practice,
                 real_trial_num: 0,
-                // First/second probes are left/right or top/bottom, respectively.
-                left_line_length_px: lineLengths[0],
-                right_line_length_px: lineLengths[1],
+                left_or_top_length_px: lineLengths[0],
+                right_or_bottom_length_px: lineLengths[1],
                 correct_response: isSame ? keySame : keyDifferent,
                 block_num: blockNum,
-                condition: `${occlusion}_${orientation}`,
                 occlusion,
                 orientation,
             },
