@@ -1,3 +1,6 @@
+// Cache generated stimulus images for reuse across trials and instructions.
+const perceptionImageCache = new Map();
+
 // from https://github.com/vassar-cogscilab/js-display-durations/blob/master/experiment/frame_rate_estimation.js
 
 // Estimate the average milliseconds per display frame, optionally trimming extreme samples.
@@ -132,6 +135,7 @@ function applyScreenCalibration(pixelsPerCm) {
         throw new Error('Display dimensions and viewing distance must be positive numbers.');
     }
     displayPixelsPerCm = pixelsPerCm;
+    perceptionImageCache.clear();
     const pixelsForDegrees = degrees => Math.max(1, Math.round(
         2 * viewingDistanceCm * Math.tan(degrees * Math.PI / 360) * pixelsPerCm
     ));
@@ -178,9 +182,12 @@ function gridStimulus(lineLengths = null) {
     return svgDataUrl(markup + taskFrameOutline() + '</svg>');
 }
 
-// Render either orientation, with an optional physical bar and green probes.
+// Generate each unique display once; subsequent calls return its cached image URL.
 function perceptionStimulus(conditionId, lineLengths = null, showBar = true) {
     const {occlusion, orientation} = perceptionConditions[conditionId];
+    const hasBar = showBar && occlusion === 'occluded';
+    const cacheKey = JSON.stringify([orientation, hasBar, lineLengths, squareColor, occluderColor]);
+    if (perceptionImageCache.has(cacheKey)) return perceptionImageCache.get(cacheKey);
     const vertical = orientation === 'vertical';
     const cell = gridCellSize;
     const size = taskFrameSize;
@@ -192,7 +199,7 @@ function perceptionStimulus(conditionId, lineLengths = null, showBar = true) {
         const coordinate = i * cell;
         markup += `<path d="M ${coordinate} 0 V ${size} M 0 ${coordinate} H ${size}" stroke="#999" stroke-width="${gridLineWidth}" stroke-dasharray="5 5"/>`;
     }
-    if (showBar && occlusion === 'occluded') {
+    if (hasBar) {
         markup += `<rect x="${(vertical ? 2 : 1) * cell}" y="${(vertical ? 1 : 2) * cell}" width="${(vertical ? 1 : 3) * cell}" height="${(vertical ? 3 : 1) * cell}" fill="${occluderColor}"/>`;
     }
     if (lineLengths) {
@@ -203,7 +210,9 @@ function perceptionStimulus(conditionId, lineLengths = null, showBar = true) {
             markup += `<line x1="${x - (vertical ? 0 : length / 2)}" y1="${y - (vertical ? length / 2 : 0)}" x2="${x + (vertical ? 0 : length / 2)}" y2="${y + (vertical ? length / 2 : 0)}" stroke="#00C900" stroke-width="${lineWidth}"/>`;
         });
     }
-    return svgDataUrl(markup + taskFrameOutline() + '</svg>');
+    const image = svgDataUrl(markup + taskFrameOutline() + '</svg>');
+    perceptionImageCache.set(cacheKey, image);
+    return image;
 }
 
 // Build the retained imagery illustrations.

@@ -38,7 +38,6 @@ jsPsych.data.addProperties({
     task_mode: 'perception',
     pixels_per_cm: online === 'on' ? null : displayPixelsPerCm,
     viewing_distance_cm: viewingDistanceCm,
-    block_order: blockOrder.join('-'),
     square_color: squareColor,
     occluder_color: occluderColor,
     study_id: study_id,
@@ -128,13 +127,13 @@ timeline.push({
 function buildExperimentTimeline() {
     const taskTimeline = [];
     initializePerceptionInstructions();
-    // /* preload images */
+    // Preload each unique display.
     const preloadImages = {
         type: jsPsychPreload,
-        images: Object.keys(perceptionConditions).flatMap(condition => [
+        images: [...new Set(Object.keys(perceptionConditions).flatMap(condition => [
             perceptionStimulus(condition, null, false), perceptionStimulus(condition),
             ...linePairs.map(pair => perceptionStimulus(condition, pair)),
-        ]),
+        ]))],
     };
     taskTimeline.push(preloadImages);
     if (jump_to_questionnaire !== 'on') {
