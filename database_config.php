@@ -4,5 +4,5 @@
   $username = "xueyi_huang";
   $password = "huang_xueyi";
   $dbname = "subjectivitylab_xueyi";
-  $table = "visual_occlusion_v10";
+  $table = "visual_occlusion_new_paradigm_v01";
 ?>
