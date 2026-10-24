@@ -68,7 +68,7 @@ body, html {
 
 .fixation-text {
     font-family: Arial, sans-serif;
-    font-size: 32px;
+    font-size: var(--fixation-font-size);
 }
 
 .feedback-correct {

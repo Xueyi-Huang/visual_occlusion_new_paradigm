@@ -1,8 +1,8 @@
 const online = "on"; // "on": card calibration; "off": use the lab display settings below.
-const review_mode = "on"; // if "on", the number of trials will be reduced for reviewing the experiment
+const review_mode = "off"; // if "on", the number of trials will be reduced for reviewing the experiment
 const save_data_locally = "on"; // if "on", the data will be saved locally after finishing the whole experiment
 const jump_to_questionnaire = "off"; // if "on", it will jump to the questionnaire
-const skip_vviq = "off"; // Set to "on" to skip the VVIQ.
+// const skip_vviq = "off"; // Set to "on" to skip the VVIQ. Will need it for the imagery version.
 
 // Display setup:
 const viewingDistanceCm = 50;
@@ -14,10 +14,10 @@ const stimulusAngles = {  // the settings from Ongchoco and Scholl (2019)
     longLine: 0.90,
     lineWidth: 0.08,
     frameBorderWidth: 0.32,
+    fixationFontSize: 1.3, // Nominal font size; the visible Arial plus is smaller.
 };
 
 // Experiment design parameters.
-const conditionPositions = {1: 'middle', 2: 'top', 3: 'behind'}; // Retained for the imagery version.
 const perceptionConditions = {
     1: {occlusion: 'nothing', orientation: 'vertical'},
     2: {occlusion: 'occluded', orientation: 'vertical'},
@@ -42,9 +42,6 @@ const perceptionDurationPractice = 1000;
 const currentURL = window.location.href;
 const splitURL = currentURL.split("?")[1];
 const debriefURL = "consent_and_debriefing/debriefing.html" + '?' + splitURL;
-
-const keySame = 'S';
-const keyDifferent = 'D';
 
 // All geometry comes from one physical scale, for both lab and online runs.
 let gridCellSize, taskFrameSize, taskFrameBorderWidth;

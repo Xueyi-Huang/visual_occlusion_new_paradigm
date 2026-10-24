@@ -15,8 +15,12 @@ const jsPsych = initJsPsych({
 
 // capture info from Prolific
 let subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
-if (subject_id == null) subject_id = 20;
+if (subject_id == null) subject_id = 1;
 Math.seedrandom(subject_id); // Reproduce assignment and trial order for this participant.
+
+// Assign each participant to either response mapping with equal probability.
+const keySame = Math.random() < 0.5 ? 'Z' : 'M';
+const keyDifferent = keySame === 'Z' ? 'M' : 'Z';
 
 const squareColor = Math.random() < 0.5 ? 'black' : 'white';
 const occluderColor = squareColor === 'black' ? 'white' : 'black';
@@ -34,6 +38,8 @@ const browserVersion = browserInfo[1];
 
 jsPsych.data.addProperties({
     subject_id: subject_id,
+    key_same: keySame,
+    key_different: keyDifferent,
     online,
     task_mode: 'perception',
     pixels_per_cm: online === 'on' ? null : displayPixelsPerCm,
@@ -218,7 +224,7 @@ function buildExperimentTimeline() {
             stimulus: '<div class="task-panel">Same or Different?</div>',
             choices: [keySame, keyDifferent],
             prompt: () => jsPsych.timelineVariable('data').isPractice === 'off'
-                ? '' : '<p>S = Same, D = Different</p>',
+                ? '' : `<p>Z = ${keySame === 'Z' ? 'Same' : 'Different'}, M = ${keySame === 'M' ? 'Same' : 'Different'}</p>`,
             response_ends_trial: true,
             data: () => ({...jsPsych.timelineVariable('data'), stage: 'judgment'}),
             on_load: function() {
@@ -402,7 +408,7 @@ function buildExperimentTimeline() {
             // Imagery version asked about strategies for imagining the bar and comparing the lines.
             {prompt: '1. Did you use any particular strategy when comparing the line lengths?', name: 'general_strategy', rows: 3, columns: 90, required: true},
             // Imagery version asked about time provided for imagining the bar and viewing the lines.
-            {prompt: '2. Do you feel you were able to follow the task instructions correctly?', name: 'instructions', rows: 3, columns: 90, required: true},
+            {prompt: '2. Do you feel that the task instructions were clear and easy to follow?', name: 'instructions', rows: 3, columns: 90, required: true},
             {prompt: '3. Do you have any other comments about the experiment or how you felt doing it?', name: 'comments', rows: 3, columns: 90, required: false},
         ],
         data: {stage: 'study_questionnaire'},
@@ -419,6 +425,23 @@ function buildExperimentTimeline() {
         on_finish: saveQuestionnaire,
     };
     taskTimeline.push(demographics);
+
+    if (online === 'on') {
+        taskTimeline.push({
+            css_classes: ['questionnaire-page'],
+            type: jsPsychSurveyMultiChoice,
+            preamble: 'Your answer to this question will not affect your reward. Please answer honestly.',
+            questions: [{
+                prompt: 'Did you follow the task instructions and complete the study as intended, regardless of accuracy?',
+                name: 'engaged',
+                options: ['Yes', 'No'],
+                required: true,
+            }],
+            data: {stage: 'final_question'},
+            button_label: 'Continue',
+            on_finish: saveQuestionnaire,
+        });
+    }
 
     const bufferPage = {
         type: jsPsychHtmlButtonResponse,

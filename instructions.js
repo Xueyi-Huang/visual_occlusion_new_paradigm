@@ -20,7 +20,8 @@ function practiceStartText() {
 }
 
 function fixationInstruction() {
-    const illustration = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${taskFrameSize}" height="${taskFrameSize}" viewBox="0 0 ${taskFrameSize} ${taskFrameSize}"><rect width="${taskFrameSize}" height="${taskFrameSize}" fill="lightgray"/><text x="${taskFrameSize / 2}" y="${taskFrameSize / 2}" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="32" fill="black">+</text>${taskFrameOutline()}</svg>`);
+    const fixationFontSize = document.documentElement.style.getPropertyValue('--fixation-font-size');
+    const illustration = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${taskFrameSize}" height="${taskFrameSize}" viewBox="0 0 ${taskFrameSize} ${taskFrameSize}"><rect width="${taskFrameSize}" height="${taskFrameSize}" fill="lightgray"/><text x="${taskFrameSize / 2}" y="${taskFrameSize / 2}" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="${fixationFontSize}" fill="black">+</text>${taskFrameOutline()}</svg>`);
     return instructionPage(`<p>At the beginning of each trial, a cross will appear in the center of the screen. Please <strong>keep your gaze at the center throughout the trial</strong> even after the cross disappears.</p>
         ${instructionImage(illustration, 'Fixation cross centered in the box')}`);
 }
@@ -132,11 +133,11 @@ const screen_calibration_text = `<div class="instructions left-aligned">
     <h2>Match your screen to a card</h2>
     <p><strong>We do this to keep the visual display the same physical size for all participants.</strong></p>
     <p>Use a <strong>standard bank card</strong> (85.6 × 53.98 mm, or 3.375 × 2.125 in). Hold it against your screen and move the slider until the rectangle's <strong>outside edges match the card</strong>.</p>
-    <p>After matching, put the card away and sit about <strong>${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) from the screen. <strong>Keep this distance throughout the task, and do not change browser zoom or switch screens</strong> so that the display appear a consistent size for you across the study.</p>
+    <p>After matching, put the card away and sit <strong>at least ${viewingDistanceCm} cm</strong> (<strong>${(viewingDistanceCm / 2.54).toFixed(1)} in</strong>) away from the screen. <strong>Keep your viewing distance consistent throughout the task, and do not change browser zoom or switch screens</strong> so that the display appears a consistent size for you across the study.</p>
     <br>
     <div id="calibration-card" style="width:320px;aspect-ratio:85.6 / 53.98;border:2px solid black;box-sizing:border-box;background:white;margin:24px auto;"></div>
     <input id="card-size-slider" type="range" min="120" max="600" step="1" value="320" style="display:block; width:60%; margin:20px auto;">
-    <p><label><input id="calibration-distance" type="checkbox"> <strong>I've matched the card and will sit about ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</strong></label></p>
+    <p><label><input id="calibration-distance" type="checkbox"> <strong>I've matched the card and will sit at least ${viewingDistanceCm} cm (${((viewingDistanceCm / 2.54).toFixed(1))} in) away.</strong></label></p>
     <br>
     <button id="calibration-continue" class="jspsych-btn" disabled>Continue</button>
     <p id="calibration-message" role="status" aria-live="polite"></p>
@@ -149,6 +150,7 @@ function perception_initial_instruction_pages(numBlocks) {
         instructionPage(`<p>Welcome! Thanks for helping us better understand how people's vision works.</p>
             <p>Your task is to judge <strong>whether two lines have the same or different lengths</strong>.</p>
             <p>First, you'll read the instructions and complete some practice. Then you'll complete ${numBlocks} blocks, followed by a few questions about the study.</p>
+            <p>You can take a short break between blocks, while the instructions are on screen.</p>
             <p>Click "Next" to learn the task.</p>`),
     ];
 }
@@ -174,7 +176,7 @@ function perceptionExample(conditionId, lengths = null) {
 }
 
 function initializePerceptionInstructions() {
-    response_instructions = `<p>Finally, two green lines will appear in the two squares.</p><p>Your task is to judge <strong>whether they have the same or different lengths</strong>. Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>`;
+    response_instructions = `<p>Finally, two green lines will appear in the two squares.</p><p>Your task is to judge <strong>whether they have the same or different lengths</strong>. Press <strong>"Z"</strong> for ${keySame === 'Z' ? 'the same' : 'different'} lengths, or <strong>"M"</strong> for ${keySame === 'M' ? 'the same' : 'different'} lengths.</p>`;
     full_practice_pages = [
         fixationInstruction(),
         instructionPage(`<p>Next, you'll see a grid with two ${squareColor} squares.</p>${instructionImage(perceptionStimulus(firstBlockCondition, null, false), 'The two squares')}`),
@@ -201,11 +203,11 @@ function blockInstructionPages(conditionId, blockNum) {
     pages.push(instructionPage(`${blockNum === 1
         ? '<p><strong>Well done!</strong> You are ready for the real trials.</p>'
         : ''}
-        <p>Reminder: Press <strong>"${keySame}"</strong> for the same length, or <strong>"${keyDifferent}"</strong> for different lengths.</p>
+        <p>Reminder: Press <strong>"Z"</strong> for ${keySame === 'Z' ? 'the same' : 'different'} lengths, or <strong>"M"</strong> for ${keySame === 'M' ? 'the same' : 'different'} lengths.</p>
         ${blockNum === 1 ? `<p>The lines appear for less time than in practice, so the task may be difficult. There's no need to restart the study or return your submission even if you feel you are not doing well, <strong>but please try your best to judge the line lengths accurately</strong>. Main trials do not show correct/incorrect feedback.</p>`
             : '<p><strong>Please try your best to judge the line lengths accurately</strong>.</p>'}
-        <p>Please sit back and stay about <strong>${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> from the screen throughout the study.</p>
-        <p>Click "Next" when you're ready to start. Good luck!</p>`));
+        <p>Please sit back and stay <strong>at least ${viewingDistanceCm} cm (${(viewingDistanceCm / 2.54).toFixed(1)} inches)</strong> away from the screen, keeping your viewing distance consistent throughout the study.</p>
+        <p>Click "Next" when you're ready to start the real trials. Good luck!</p>`));
     return pages;
 }
 

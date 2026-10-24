@@ -148,6 +148,7 @@ function applyScreenCalibration(pixelsPerCm) {
     taskFrameBorderWidth = pixelsForDegrees(stimulusAngles.frameBorderWidth);
     linePairs = [[shortLine, shortLine], [longLine, longLine], [shortLine, longLine], [longLine, shortLine]];
     document.documentElement.style.setProperty('--task-frame-size', `${taskFrameSize}px`);
+    document.documentElement.style.setProperty('--fixation-font-size', `${pixelsForDegrees(stimulusAngles.fixationFontSize)}px`);
     document.documentElement.style.setProperty('--task-frame-border-width', `${taskFrameBorderWidth}px`);
     document.documentElement.style.setProperty('--task-frame-border-color', taskFrameBorderColor);
     document.documentElement.style.setProperty('--task-prompt-space', `${trialLayout.promptSpace}px`);
