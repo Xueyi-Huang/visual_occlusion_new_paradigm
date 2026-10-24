@@ -38,6 +38,8 @@ const browserVersion = browserInfo[1];
 
 jsPsych.data.addProperties({
     subject_id: subject_id,
+    study_id: study_id,
+    session_id: session_id,
     key_same: keySame,
     key_different: keyDifferent,
     online,
@@ -46,8 +48,6 @@ jsPsych.data.addProperties({
     viewing_distance_cm: viewingDistanceCm,
     square_color: squareColor,
     occluder_color: occluderColor,
-    study_id: study_id,
-    session_id: session_id,
     windowHeight: windowHeight,
     windowWidth: windowWidth,
     screenHeight: screenHeight,
@@ -374,6 +374,7 @@ function buildExperimentTimeline() {
                 left_or_top_length_px: lineLengths[0],
                 right_or_bottom_length_px: lineLengths[1],
                 correct_response: isSame ? keySame : keyDifferent,
+                correct_answer: isSame ? 'same' : 'different',
                 block_num: blockNum,
                 occlusion,
                 orientation,
